@@ -3,6 +3,7 @@ import { Send, RefreshCw } from 'lucide-react';
 import { LESSONS } from '../lib/constants';
 import { ChatMessage } from '../lib/types';
 import { ChatState, handleChatMessage } from '../lib/chat';
+import { FormattedMessage } from '../components/FormattedMessage';
 
 function PythonPilotPage() {
   const [selectedLesson, setSelectedLesson] = useState(LESSONS[0]);
@@ -56,22 +57,11 @@ function PythonPilotPage() {
               {/* Chat Messages Area */}
               <div className="flex-1 p-4 overflow-y-auto">
                 {chatHistory.map((msg, index) => (
-                  <div
+                  <FormattedMessage
                     key={index}
-                    className={`mb-4 ${
-                      msg.role === 'user' ? 'text-right' : 'text-left'
-                    }`}
-                  >
-                    <div
-                      className={`inline-block max-w-[80%] rounded-lg px-4 py-2 ${
-                        msg.role === 'user'
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {msg.content}
-                    </div>
-                  </div>
+                    content={msg.content}
+                    isUser={msg.role === 'user'}
+                  />
                 ))}
                 <div ref={messagesEndRef} />
               </div>

@@ -1,3 +1,35 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.prose {
+  @apply text-inherit;
+}
+
+.prose p {
+  @apply my-0;
+}
+
+.prose pre {
+  @apply my-2 p-0;
+}
+
+.prose code {
+  @apply text-inherit;
+}
+
+.prose ul {
+  @apply my-0;
+}
+
+.prose ol {
+  @apply my-0;
+}
+
+.prose li {
+  @apply my-0;
+}
+
+.prose blockquote {
+  @apply my-2 border-l-4 border-current pl-4 italic;
+}
