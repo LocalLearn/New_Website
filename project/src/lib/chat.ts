@@ -86,7 +86,12 @@ export async function handleChatMessage(
       ...newHistory,
       {
         role: 'assistant',
-        content: 'Welcome! Before we begin, please tell me your learning preferences. You can specify your preferred theme (Fantasy/Space/Cyberpunk/Classic Python), tone (Encouraging/Humorous/Serious/Mysterious), difficulty (Novice/Explorer/Master), and learning style (Visual/Hands-on/Analytical/Story-driven). For example: "I prefer Fantasy theme, Encouraging tone, Novice difficulty, and Visual learning style"',
+        content: `Welcome, Adventurer! 🧙‍♂️ Let's tailor your quest. Choose your preferences:
+Theme: Fantasy 🏰 / Space 🚀 / Cyberpunk 🤖 / Classic Python 🐍
+Tone: Encouraging 🌟 / Humorous 😄 / Serious 🧠 / Mysterious 🔮
+Difficulty: Novice (guided discovery) / Explorer (balanced) / Master (no hints)
+Learning Style: Visual 🎨 / Hands-on ✋ / Analytical 🔍 / Story-driven 📖
+Type your choices (e.g., 'Fantasy, Humorous, Novice, Visual')`,
       },
     ];
   }
@@ -99,7 +104,7 @@ export async function handleChatMessage(
         ...newHistory,
         {
           role: 'assistant',
-          content: `Great! I'll adjust my responses to match your preferences: ${chatState.getPreferenceString()}. What would you like to learn about ${selectedLesson}?`,
+          content: `Great! I'll adjust my responses to match your preferences: ${chatState.getPreferenceString()}. Ready to start your lesson about ${selectedLesson}?`,
         },
       ];
     }
