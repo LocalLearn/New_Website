@@ -43,7 +43,7 @@ function SignUpPage() {
     try {
       setLoading(true);
       await signUp(formData.email, formData.password, formData.fullName);
-      navigate('/');
+      navigate('/courses');
     } catch (error) {
       console.error('Error signing up:', error);
     } finally {

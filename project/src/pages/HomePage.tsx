@@ -1,7 +1,10 @@
 import React from 'react';
-import { BookOpen, Users, Map, Sprout } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Users, Map, Sprout } from 'lucide-react';
 
 function HomePage() {
+  const navigate = useNavigate();
+
   return (
     <>
       {/* Hero Section */}
@@ -18,12 +21,12 @@ function HomePage() {
               Experience personalized learning paths and meaningful group interactions.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <a href="#" className="bg-purple-600 text-white px-8 py-3 rounded-lg text-center hover:bg-purple-700 transition-colors">
+              <button
+                onClick={() => navigate('/signup')}
+                className="bg-purple-600 text-white px-8 py-3 rounded-lg text-center hover:bg-purple-700 transition-colors"
+              >
                 Get Started
-              </a>
-              <a href="#" className="bg-purple-100 text-purple-600 px-8 py-3 rounded-lg text-center hover:bg-purple-200 transition-colors">
-                Browse Courses
-              </a>
+              </button>
             </div>
           </div>
           <div className="relative">
@@ -49,11 +52,6 @@ function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {[
-              {
-                icon: <BookOpen className="w-8 h-8" />,
-                title: 'AI-Driven Learning',
-                description: 'Personalized learning paths adapted to your unique style and pace.'
-              },
               {
                 icon: <Users className="w-8 h-8" />,
                 title: 'Collaborative Sessions',

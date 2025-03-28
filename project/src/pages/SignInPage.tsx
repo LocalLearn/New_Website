@@ -42,7 +42,7 @@ function SignInPage() {
     try {
       setLoading(true);
       await signIn(formData.email, formData.password);
-      navigate('/');
+      navigate('/courses');
     } catch (error) {
       console.error('Error signing in:', error);
     } finally {

@@ -4,6 +4,8 @@ import { BookOpen } from 'lucide-react';
 import HomePage from './pages/HomePage';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
+import CoursesPage from './pages/CoursesPage';
+import PythonPilotPage from './pages/PythonPilotPage';
 
 function App() {
   return (
@@ -16,6 +18,7 @@ function App() {
             <span>Local Learn</span>
           </Link>
           <div className="flex items-center space-x-6">
+            <Link to="/courses" className="text-gray-700 hover:text-purple-600">Courses</Link>
             <Link to="/signin" className="text-gray-700 hover:text-purple-600">Login</Link>
             <Link to="/signup" className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
               Sign Up
@@ -27,6 +30,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/courses" element={<CoursesPage />} />
+          <Route path="/python-pilot" element={<PythonPilotPage />} />
         </Routes>
       </div>
     </Router>
