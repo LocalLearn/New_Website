@@ -1,24 +1,49 @@
-import React, { useState } from 'react';
-import { Send } from 'lucide-react';
-
-const LESSONS = [
-  'Lesson 1: Basics of Syntax and Execution',
-  'Lesson 2: Control Flow with Conditionals',
-  'Lesson 3: Loops and Iteration',
-  'Lesson 4: Functions and Scope'
-];
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, RefreshCw } from 'lucide-react';
+import { LESSONS } from '../lib/constants';
+import { ChatMessage } from '../lib/types';
+import { ChatState, handleChatMessage } from '../lib/chat';
 
 function PythonPilotPage() {
   const [selectedLesson, setSelectedLesson] = useState(LESSONS[0]);
   const [message, setMessage] = useState('');
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const chatState = useRef(new ChatState());
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatHistory]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim()) {
-      // Handle message submission
-      console.log('Message sent:', message);
+    if (!message.trim()) return;
+
+    setIsLoading(true);
+    try {
+      const newHistory = await handleChatMessage(
+        message,
+        chatHistory,
+        chatState.current,
+        selectedLesson
+      );
+      setChatHistory(newHistory);
       setMessage('');
+    } catch (error) {
+      console.error('Error handling message:', error);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const resetChat = () => {
+    chatState.current.reset();
+    setChatHistory([]);
   };
 
   return (
@@ -30,7 +55,25 @@ function PythonPilotPage() {
             <div className="h-[600px] flex flex-col">
               {/* Chat Messages Area */}
               <div className="flex-1 p-4 overflow-y-auto">
-                {/* Messages will be displayed here */}
+                {chatHistory.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`mb-4 ${
+                      msg.role === 'user' ? 'text-right' : 'text-left'
+                    }`}
+                  >
+                    <div
+                      className={`inline-block max-w-[80%] rounded-lg px-4 py-2 ${
+                        msg.role === 'user'
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
               </div>
 
               {/* Message Input */}
@@ -42,10 +85,12 @@ function PythonPilotPage() {
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Type your message..."
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    disabled={isLoading}
                   />
                   <button
                     type="submit"
-                    className="bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700 transition-colors"
+                    disabled={isLoading}
+                    className="bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
                   >
                     <Send className="w-5 h-5" />
                   </button>
@@ -81,14 +126,21 @@ function PythonPilotPage() {
               <ol className="list-decimal list-inside space-y-2 text-gray-600 mb-6">
                 <li>Select a lesson from the dropdown menu above</li>
                 <li>Type 'Let's Go' to begin the lesson</li>
+                <li>Set your learning preferences when prompted</li>
                 <li>Ask questions about the lesson content</li>
-                <li>The AI will respond with helpful explanations</li>
               </ol>
               <h4 className="font-semibold text-gray-900 mb-2">Tips:</h4>
-              <ul className="list-disc list-inside space-y-2 text-gray-600">
+              <ul className="list-disc list-inside space-y-2 text-gray-600 mb-6">
                 <li>Be specific in your questions</li>
                 <li>Use follow-up questions to dive deeper</li>
               </ul>
+              <button
+                onClick={resetChat}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Reset Preferences
+              </button>
             </div>
           </div>
         </div>
