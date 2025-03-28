@@ -4,6 +4,7 @@ import { LESSONS } from '../lib/constants';
 import { ChatMessage } from '../lib/types';
 import { ChatState, handleChatMessage } from '../lib/chat';
 import { FormattedMessage } from '../components/FormattedMessage';
+import { LoadingIndicator } from '../components/LoadingIndicator';
 
 function PythonPilotPage() {
   const [selectedLesson, setSelectedLesson] = useState(LESSONS[0]);
@@ -12,6 +13,7 @@ function PythonPilotPage() {
   const [isLoading, setIsLoading] = useState(false);
   const chatState = useRef(new ChatState());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -19,24 +21,41 @@ function PythonPilotPage() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [chatHistory]);
+  }, [chatHistory, isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    const currentMessage = message.trim();
+    if (!currentMessage) return;
 
+    // Immediately clear input and add user message to chat
+    setMessage('');
+    const newMessage: ChatMessage = { role: 'user', content: currentMessage };
+    setChatHistory(prev => [...prev, newMessage]);
+    
+    // Focus back on input for next message
+    inputRef.current?.focus();
+
+    // Process the message
     setIsLoading(true);
     try {
-      const newHistory = await handleChatMessage(
-        message,
+      const response = await handleChatMessage(
+        currentMessage,
         chatHistory,
         chatState.current,
         selectedLesson
       );
-      setChatHistory(newHistory);
-      setMessage('');
+      // Only update with assistant's response
+      const assistantMessage = response[response.length - 1];
+      if (assistantMessage.role === 'assistant') {
+        setChatHistory(prev => [...prev, assistantMessage]);
+      }
     } catch (error) {
       console.error('Error handling message:', error);
+      setChatHistory(prev => [...prev, {
+        role: 'assistant',
+        content: 'I apologize, but I encountered an error processing your request. Please try again.'
+      }]);
     } finally {
       setIsLoading(false);
     }
@@ -45,6 +64,8 @@ function PythonPilotPage() {
   const resetChat = () => {
     chatState.current.reset();
     setChatHistory([]);
+    setMessage('');
+    inputRef.current?.focus();
   };
 
   return (
@@ -63,6 +84,7 @@ function PythonPilotPage() {
                     isUser={msg.role === 'user'}
                   />
                 ))}
+                {isLoading && <LoadingIndicator />}
                 <div ref={messagesEndRef} />
               </div>
 
@@ -70,6 +92,7 @@ function PythonPilotPage() {
               <form onSubmit={handleSubmit} className="border-t p-4">
                 <div className="flex gap-2">
                   <input
+                    ref={inputRef}
                     type="text"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
