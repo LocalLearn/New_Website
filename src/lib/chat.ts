@@ -9,11 +9,12 @@ export class ChatState {
     this.state = {
       preferences: { ...DEFAULT_PREFERENCES },
       preferences_set: false,
-      conversation_started: false,
+      conversation_started: true, // Always start the conversation
     };
   }
 
   updatePreferences(preferences: Partial<UserPreferences>): void {
+    // Keep existing preferences, only update provided ones
     Object.entries(preferences).forEach(([key, value]) => {
       const validValues = VALID_PREFERENCES[key as keyof UserPreferences];
       if (validValues?.includes(value)) {
@@ -49,15 +50,14 @@ export class ChatState {
     this.state = {
       preferences: { ...DEFAULT_PREFERENCES },
       preferences_set: false,
-      conversation_started: false,
+      conversation_started: true,
     };
   }
 }
 
-export function parsePreferences(message: string): Partial<UserPreferences> | null {
+export function parsePreferences(message: string): Partial<UserPreferences> {
   const parts = message.toLowerCase().split(',').map(part => part.trim());
   const parsed: Partial<UserPreferences> = {};
-  let validCount = 0;
 
   Object.entries(VALID_PREFERENCES).forEach(([category, validValues]) => {
     const matchingValue = validValues.find(value =>
@@ -65,11 +65,10 @@ export function parsePreferences(message: string): Partial<UserPreferences> | nu
     );
     if (matchingValue) {
       parsed[category as keyof UserPreferences] = matchingValue as any;
-      validCount++;
     }
   });
 
-  return validCount >= 2 ? parsed : null;
+  return parsed; // Return any valid preferences found
 }
 
 export async function handleChatMessage(
@@ -78,12 +77,9 @@ export async function handleChatMessage(
   chatState: ChatState,
   selectedLesson: string
 ): Promise<ChatMessage[]> {
-  const newHistory = [...history, { role: 'user', content: message }];
-
-  if (!chatState.isConversationStarted() && message.toLowerCase() === "let's go") {
-    chatState.startConversation();
+  // If this is the first message, show the welcome message
+  if (history.length === 0) {
     return [
-      ...newHistory,
       {
         role: 'assistant',
         content: `Welcome, Adventurer! 🧙‍♂️ Let's tailor your quest. Choose your preferences:
@@ -91,23 +87,24 @@ Theme: Fantasy 🏰 / Space 🚀 / Cyberpunk 🤖 / Classic Python 🐍
 Tone: Encouraging 🌟 / Humorous 😄 / Serious 🧠 / Mysterious 🔮
 Difficulty: Novice (guided discovery) / Explorer (balanced) / Master (no hints)
 Learning Style: Visual 🎨 / Hands-on ✋ / Analytical 🔍 / Story-driven 📖
-Type your choices (e.g., 'Fantasy, Humorous, Novice, Visual')`,
+Type your choices (e.g., 'Fantasy, Humorous, Novice, Visual') or press Enter to use default settings`,
       },
     ];
   }
 
+  const newHistory = [...history, { role: 'user', content: message }];
+
   if (!chatState.arePreferencesSet()) {
     const preferences = parsePreferences(message);
-    if (preferences) {
-      chatState.updatePreferences(preferences);
-      return [
-        ...newHistory,
-        {
-          role: 'assistant',
-          content: `Great! I'll adjust my responses to match your preferences: ${chatState.getPreferenceString()}. Ready to start your lesson about ${selectedLesson}?`,
-        },
-      ];
-    }
+    // Update any valid preferences found, keeping defaults for others
+    chatState.updatePreferences(preferences);
+    return [
+      ...newHistory,
+      {
+        role: 'assistant',
+        content: `Great! I'll adjust my responses to match your preferences: ${chatState.getPreferenceString()}. Let's begin ${selectedLesson}!`,
+      },
+    ];
   }
 
   try {
