@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Map, Sprout } from 'lucide-react';
+import { Users, Map, Sprout, Brain } from 'lucide-react';
 
 function HomePage() {
   const navigate = useNavigate();
@@ -50,7 +50,7 @@ function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
             {[
               {
                 icon: <Users className="w-8 h-8" />,
@@ -66,6 +66,11 @@ function HomePage() {
                 icon: <Sprout className="w-8 h-8" />,
                 title: 'Smart Course Creation',
                 description: 'Courses automatically form when enough students share your interests.'
+              },
+              {
+                icon: <Brain className="w-8 h-8" />,
+                title: 'AI-Driven Learning',
+                description: 'Personalized learning paths adapted to your unique style and pace.'
               }
             ].map((feature, index) => (
               <div key={index} className="flex gap-6">
