@@ -9,12 +9,11 @@ export class ChatState {
     this.state = {
       preferences: { ...DEFAULT_PREFERENCES },
       preferences_set: false,
-      conversation_started: true, // Always start the conversation
+      conversation_started: true,
     };
   }
 
   updatePreferences(preferences: Partial<UserPreferences>): void {
-    // Keep existing preferences, only update provided ones
     Object.entries(preferences).forEach(([key, value]) => {
       const validValues = VALID_PREFERENCES[key as keyof UserPreferences];
       if (validValues?.includes(value)) {
@@ -68,16 +67,16 @@ export function parsePreferences(message: string): Partial<UserPreferences> {
     }
   });
 
-  return parsed; // Return any valid preferences found
+  return parsed;
 }
 
 export async function handleChatMessage(
   message: string,
   history: ChatMessage[],
   chatState: ChatState,
-  selectedLesson: string
+  selectedLesson: string,
+  onChunk: (chunk: string) => void
 ): Promise<ChatMessage[]> {
-  // If this is the first message, show the welcome message
   if (history.length === 0) {
     return [
       {
@@ -96,7 +95,6 @@ Type your choices (e.g., 'Fantasy, Humorous, Novice, Visual') or press Enter to 
 
   if (!chatState.arePreferencesSet()) {
     const preferences = parsePreferences(message);
-    // Update any valid preferences found, keeping defaults for others
     chatState.updatePreferences(preferences);
     return [
       ...newHistory,
@@ -108,21 +106,63 @@ Type your choices (e.g., 'Fantasy, Humorous, Novice, Visual') or press Enter to 
   }
 
   try {
-    const { data, error } = await supabase.functions.invoke('chat', {
-      body: {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    const response = await fetch(`${supabase.functions.url}/chat`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session?.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         messages: newHistory,
         selectedLesson,
         preferences: chatState.getPreferences(),
-      },
+      }),
     });
 
-    if (error) throw error;
+    if (!response.ok) throw new Error('Failed to get response');
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let fullContent = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const text = decoder.decode(value);
+        const lines = text.split('\n');
+        
+        for (const line of lines) {
+          if (line.trim() === '') continue;
+          if (line.trim() === 'data: [DONE]') continue;
+          
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(5));
+              const content = data.choices[0]?.delta?.content || '';
+              if (content) {
+                fullContent += content;
+                onChunk(content);
+              }
+            } catch (error) {
+              console.error('Error parsing chunk:', error);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error reading stream:', error);
+      throw error;
+    }
 
     return [
       ...newHistory,
       {
         role: 'assistant',
-        content: data.choices[0].message.content,
+        content: fullContent,
       },
     ];
   } catch (error) {

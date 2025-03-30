@@ -27,25 +27,7 @@ const LESSONS_CONTENT = {
   'Lesson 2: Control Flow with Conditionals': lesson2Content,
   'Lesson 3: Loops and Iteration': lesson3Content,
   'Lesson 4: Functions and Scope': lesson4Content,
-};
-
-function containsDirectCode(text: string): boolean {
-  const codePatterns = [
-    /```python[\s\S]*?```/,
-    /\bdef\s+\w+\s*\([^)]*\):/,
-    /\bclass\s+\w+:/,
-    /\bif\s+__name__\s*==\s*['"]__main__['"]/,
-    /\bprint\s*\([^)]*\)/,
-    /\bfor\s+\w+\s+in\s+/,
-    /\bwhile\s+.*:/,
-    /\btry\s*:/,
-    /\bexcept\s+.*:/,
-    /\bimport\s+\w+/,
-    /\bfrom\s+\w+\s+import\s+/,
-  ];
-
-  return codePatterns.some(pattern => pattern.test(text));
-}
+} as const;
 
 function buildSystemPrompt(selectedLesson: string, preferences: ChatRequest['preferences']): string {
   const lessonContent = LESSONS_CONTENT[selectedLesson as keyof typeof LESSONS_CONTENT] || '';
@@ -75,7 +57,6 @@ serve(async (req) => {
 
     const { messages, selectedLesson, preferences }: ChatRequest = await req.json();
 
-    // Add system message at the start
     const systemMessage = {
       role: 'system',
       content: buildSystemPrompt(selectedLesson, preferences),
@@ -92,6 +73,7 @@ serve(async (req) => {
         messages: [systemMessage, ...messages],
         temperature: 0.7,
         max_tokens: 1000,
+        stream: true,
       }),
     });
 
@@ -99,43 +81,14 @@ serve(async (req) => {
       throw new Error(`DeepSeek API error: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    const generatedText = data.choices[0].message.content;
-
-    // Check for direct code in the response
-    if (containsDirectCode(generatedText)) {
-      // If direct code is found, request a new response with stronger guidance
-      const newSystemMessage = {
-        role: 'system',
-        content: `${systemMessage.content}\n\nIMPORTANT: DO NOT provide direct code solutions. Instead, offer guidance, pseudocode, or conceptual explanations.`,
-      };
-
-      const retryResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [newSystemMessage, ...messages],
-          temperature: 0.7,
-          max_tokens: 1000,
-        }),
-      });
-
-      if (!retryResponse.ok) {
-        throw new Error(`DeepSeek API error on retry: ${retryResponse.statusText}`);
-      }
-
-      const retryData = await retryResponse.json();
-      return new Response(JSON.stringify(retryData), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Stream the response directly
+    return new Response(response.body, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
     });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {

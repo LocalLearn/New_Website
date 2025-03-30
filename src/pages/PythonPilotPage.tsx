@@ -11,6 +11,7 @@ function PythonPilotPage() {
   const [message, setMessage] = useState('');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [streamingContent, setStreamingContent] = useState('');
   const chatState = useRef(new ChatState());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -21,35 +22,34 @@ function PythonPilotPage() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [chatHistory, isLoading]);
+  }, [chatHistory, isLoading, streamingContent]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const currentMessage = message.trim();
     if (!currentMessage) return;
 
-    // Immediately clear input and add user message to chat
     setMessage('');
     const newMessage: ChatMessage = { role: 'user', content: currentMessage };
     setChatHistory(prev => [...prev, newMessage]);
+    setStreamingContent('');
     
-    // Focus back on input for next message
     inputRef.current?.focus();
-
-    // Process the message
     setIsLoading(true);
+
     try {
       const response = await handleChatMessage(
         currentMessage,
         chatHistory,
         chatState.current,
-        selectedLesson
+        selectedLesson,
+        (chunk) => {
+          setStreamingContent(prev => prev + chunk);
+        }
       );
-      // Only update with assistant's response
-      const assistantMessage = response[response.length - 1];
-      if (assistantMessage.role === 'assistant') {
-        setChatHistory(prev => [...prev, assistantMessage]);
-      }
+      
+      setChatHistory(response);
+      setStreamingContent('');
     } catch (error) {
       console.error('Error handling message:', error);
       setChatHistory(prev => [...prev, {
@@ -65,6 +65,7 @@ function PythonPilotPage() {
     chatState.current.reset();
     setChatHistory([]);
     setMessage('');
+    setStreamingContent('');
     inputRef.current?.focus();
   };
 
@@ -72,10 +73,8 @@ function PythonPilotPage() {
     <div className="min-h-[calc(100vh-80px)] bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Chat Interface */}
           <div className="lg:col-span-2 bg-white rounded-lg shadow-md overflow-hidden">
             <div className="h-[600px] flex flex-col">
-              {/* Chat Messages Area */}
               <div className="flex-1 p-4 overflow-y-auto">
                 {chatHistory.map((msg, index) => (
                   <FormattedMessage
@@ -84,11 +83,16 @@ function PythonPilotPage() {
                     isUser={msg.role === 'user'}
                   />
                 ))}
-                {isLoading && <LoadingIndicator />}
+                {streamingContent && (
+                  <FormattedMessage
+                    content={streamingContent}
+                    isUser={false}
+                  />
+                )}
+                {isLoading && !streamingContent && <LoadingIndicator />}
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Message Input */}
               <form onSubmit={handleSubmit} className="border-t p-4">
                 <div className="flex gap-2">
                   <input
@@ -112,9 +116,7 @@ function PythonPilotPage() {
             </div>
           </div>
 
-          {/* Right Panel */}
           <div className="space-y-6">
-            {/* Lesson Selection */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <label htmlFor="lesson" className="block text-sm font-medium text-gray-700 mb-2">
                 Select Lesson
@@ -133,7 +135,6 @@ function PythonPilotPage() {
               </select>
             </div>
 
-            {/* Instructions Box */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="font-semibold text-gray-900 mb-4">Instructions:</h3>
               <ol className="list-decimal list-inside space-y-2 text-gray-600 mb-6">
