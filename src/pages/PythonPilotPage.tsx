@@ -1,28 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, RefreshCw } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
 import { LESSONS } from '../lib/constants';
 import { ChatMessage } from '../lib/types';
 import { ChatState, handleChatMessage } from '../lib/chat';
 import { FormattedMessage } from '../components/FormattedMessage';
 import { LoadingIndicator } from '../components/LoadingIndicator';
+import { HybridStorage } from '../lib/storage/hybrid-storage';
+import { useAuth } from '../contexts/AuthContext';
 
 function PythonPilotPage() {
+  const { user } = useAuth();
   const [selectedLesson, setSelectedLesson] = useState(LESSONS[0]);
   const [message, setMessage] = useState('');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const chatState = useRef(new ChatState());
+  const storage = useRef(new HybridStorage());
+  const sessionId = useRef<string>(uuidv4());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const isNearBottom = () => {
     const container = chatContainerRef.current;
     if (!container) return true;
     
-    const threshold = 100; // pixels from bottom
+    const threshold = 100;
     const position = container.scrollHeight - container.scrollTop - container.clientHeight;
     return position <= threshold;
   };
@@ -52,6 +59,55 @@ function PythonPilotPage() {
   const handleScroll = () => {
     setShouldAutoScroll(isNearBottom());
   };
+
+  const loadSession = async (lesson: string) => {
+    if (!user) return;
+
+    try {
+      const sessions = await storage.current.getSessions();
+      const lessonSession = sessions.find(s => s.lesson === lesson && s.userId === user.id);
+
+      if (lessonSession) {
+        sessionId.current = lessonSession.id;
+        setChatHistory(lessonSession.messages);
+        chatState.current.updatePreferences(lessonSession.preferences);
+      }
+    } catch (error) {
+      console.error('Error loading chat session:', error);
+    }
+  };
+
+  const saveSession = async () => {
+    if (!user) return;
+
+    try {
+      await storage.current.saveSession({
+        id: sessionId.current,
+        userId: user.id,
+        lesson: selectedLesson,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        preferences: chatState.current.getPreferences(),
+        messages: chatHistory,
+        isComplete: false,
+      });
+    } catch (error) {
+      console.error('Error saving chat session:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (!isInitialized && user) {
+      loadSession(selectedLesson);
+      setIsInitialized(true);
+    }
+  }, [user, isInitialized]);
+
+  useEffect(() => {
+    if (chatHistory.length > 0) {
+      saveSession();
+    }
+  }, [chatHistory, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,7 +154,26 @@ function PythonPilotPage() {
     setMessage('');
     setStreamingContent('');
     setShouldAutoScroll(true);
+    sessionId.current = uuidv4();
     inputRef.current?.focus();
+  };
+
+  const handleLessonChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newLesson = e.target.value;
+    
+    // Save current session before switching
+    if (chatHistory.length > 0) {
+      await saveSession();
+    }
+    
+    setSelectedLesson(newLesson);
+    sessionId.current = uuidv4();
+    setChatHistory([]);
+    setStreamingContent('');
+    chatState.current.reset();
+    
+    // Load session for the new lesson
+    await loadSession(newLesson);
   };
 
   return (
@@ -160,7 +235,7 @@ function PythonPilotPage() {
               <select
                 id="lesson"
                 value={selectedLesson}
-                onChange={(e) => setSelectedLesson(e.target.value)}
+                onChange={handleLessonChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               >
                 {LESSONS.map((lesson) => (

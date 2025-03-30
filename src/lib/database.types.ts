@@ -29,6 +29,38 @@ export interface Database {
           updated_at?: string
         }
       }
+      chat_sessions: {
+        Row: {
+          id: string
+          user_id: string
+          lesson: string
+          created_at: string
+          updated_at: string
+          preferences: Json
+          messages: Json[]
+          is_complete: boolean
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          lesson: string
+          created_at?: string
+          updated_at?: string
+          preferences: Json
+          messages: Json[]
+          is_complete?: boolean
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          lesson?: string
+          created_at?: string
+          updated_at?: string
+          preferences?: Json
+          messages?: Json[]
+          is_complete?: boolean
+        }
+      }
     }
   }
 }
