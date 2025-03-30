@@ -14,15 +14,44 @@ function PythonPilotPage() {
   const [streamingContent, setStreamingContent] = useState('');
   const chatState = useRef(new ChatState());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const isNearBottom = () => {
+    const container = chatContainerRef.current;
+    if (!container) return true;
+    
+    const threshold = 100; // pixels from bottom
+    const position = container.scrollHeight - container.scrollTop - container.clientHeight;
+    return position <= threshold;
+  };
+
+  const scrollToBottom = (force = false) => {
+    if (!shouldAutoScroll && !force) return;
+    
+    const container = chatContainerRef.current;
+    if (!container) return;
+
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: 'smooth'
+    });
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [chatHistory, isLoading, streamingContent]);
+  }, [chatHistory]);
+
+  useEffect(() => {
+    if (streamingContent && shouldAutoScroll) {
+      scrollToBottom();
+    }
+  }, [streamingContent, shouldAutoScroll]);
+
+  const handleScroll = () => {
+    setShouldAutoScroll(isNearBottom());
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +62,8 @@ function PythonPilotPage() {
     const newMessage: ChatMessage = { role: 'user', content: currentMessage };
     setChatHistory(prev => [...prev, newMessage]);
     setStreamingContent('');
+    setShouldAutoScroll(true);
+    scrollToBottom(true);
     
     inputRef.current?.focus();
     setIsLoading(true);
@@ -66,6 +97,7 @@ function PythonPilotPage() {
     setChatHistory([]);
     setMessage('');
     setStreamingContent('');
+    setShouldAutoScroll(true);
     inputRef.current?.focus();
   };
 
@@ -75,7 +107,11 @@ function PythonPilotPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 bg-white rounded-lg shadow-md overflow-hidden">
             <div className="h-[600px] flex flex-col">
-              <div className="flex-1 p-4 overflow-y-auto">
+              <div 
+                ref={chatContainerRef}
+                onScroll={handleScroll}
+                className="flex-1 p-4 overflow-y-auto scroll-smooth"
+              >
                 {chatHistory.map((msg, index) => (
                   <FormattedMessage
                     key={index}
@@ -90,7 +126,7 @@ function PythonPilotPage() {
                   />
                 )}
                 {isLoading && !streamingContent && <LoadingIndicator />}
-                <div ref={messagesEndRef} />
+                <div ref={messagesEndRef} className="h-[1px]" />
               </div>
 
               <form onSubmit={handleSubmit} className="border-t p-4">
