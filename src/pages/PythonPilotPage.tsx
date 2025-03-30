@@ -8,6 +8,7 @@ import { FormattedMessage } from '../components/FormattedMessage';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import { HybridStorage } from '../lib/storage/hybrid-storage';
 import { useAuth } from '../contexts/AuthContext';
+import { DynamicTextArea } from '../components/DynamicTextArea';
 
 function PythonPilotPage() {
   const { user } = useAuth();
@@ -21,9 +22,9 @@ function PythonPilotPage() {
   const sessionId = useRef<string>(uuidv4());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isRestarting, setIsRestarting] = useState(false);
 
   const isNearBottom = () => {
     const container = chatContainerRef.current;
@@ -109,8 +110,8 @@ function PythonPilotPage() {
     }
   }, [chatHistory, user]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     const currentMessage = message.trim();
     if (!currentMessage) return;
 
@@ -121,7 +122,6 @@ function PythonPilotPage() {
     setShouldAutoScroll(true);
     scrollToBottom(true);
     
-    inputRef.current?.focus();
     setIsLoading(true);
 
     try {
@@ -148,14 +148,29 @@ function PythonPilotPage() {
     }
   };
 
-  const resetChat = () => {
-    chatState.current.reset();
-    setChatHistory([]);
-    setMessage('');
-    setStreamingContent('');
-    setShouldAutoScroll(true);
-    sessionId.current = uuidv4();
-    inputRef.current?.focus();
+  const restartLesson = async () => {
+    if (!user || isRestarting) return;
+
+    setIsRestarting(true);
+    try {
+      // Delete the current session from storage
+      await storage.current.deleteSession(sessionId.current);
+      
+      // Reset the chat state and UI
+      chatState.current.reset();
+      setChatHistory([]);
+      setMessage('');
+      setStreamingContent('');
+      setShouldAutoScroll(true);
+      
+      // Generate a new session ID
+      sessionId.current = uuidv4();
+    } catch (error) {
+      console.error('Error restarting lesson:', error);
+      // Optionally show an error message to the user
+    } finally {
+      setIsRestarting(false);
+    }
   };
 
   const handleLessonChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -205,20 +220,18 @@ function PythonPilotPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="border-t p-4">
-                <div className="flex gap-2">
-                  <input
-                    ref={inputRef}
-                    type="text"
+                <div className="flex gap-2 items-end">
+                  <DynamicTextArea
                     value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    onChange={setMessage}
+                    onSubmit={handleSubmit}
                     disabled={isLoading}
+                    maxHeight={200}
                   />
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                    className="bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 flex-shrink-0"
                   >
                     <Send className="w-5 h-5" />
                   </button>
@@ -260,11 +273,12 @@ function PythonPilotPage() {
                 <li>Use follow-up questions to dive deeper</li>
               </ul>
               <button
-                onClick={resetChat}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                onClick={restartLesson}
+                disabled={isRestarting}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
               >
-                <RefreshCw className="w-4 h-4" />
-                Reset Preferences
+                <RefreshCw className={`w-4 h-4 ${isRestarting ? 'animate-spin' : ''}`} />
+                {isRestarting ? 'Restarting...' : 'Restart Lesson'}
               </button>
             </div>
           </div>
