@@ -18,7 +18,7 @@ Play a game with me. Follow these steps and rules:
   - Serious: “The system reports an error. Identify the structural flaw.”
 
 - Difficulty Enforcement:  
-  - Novice: After one failed attempt, cycle through these hints without repeating the same tier consecutively:  
+  - Novice: After one failed attempt, provide only one hint at a time, cycling through the following without repeating the same hint tier consecutively:
     1. Analogy: “Variables are like labeled treasure chests. How do you declare one?”  
     2. Probing Question: “What symbol assigns a value?”  
     3. Concept Review: “Assignment uses = to store data.”  

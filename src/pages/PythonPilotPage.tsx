@@ -285,8 +285,8 @@ function PythonPilotPage() {
             <div className="bg-white rounded-lg shadow-md p-6">
               <h4 className="font-semibold text-gray-900 mb-4">Tips:</h4>
               <ul className="list-disc list-inside space-y-2 text-gray-600 mb-6">
-                <li>Be specific in your questions</li>
-                <li>Use follow-up questions to dive deeper</li>
+                <li>If stuck, ask for a 'Theoretical Primer'</li>
+                <li>Run your code in visual studio to verify it works before submitting</li>
               </ul>
               <button
                 onClick={restartLesson}

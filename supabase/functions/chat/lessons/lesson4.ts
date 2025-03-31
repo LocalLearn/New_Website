@@ -142,9 +142,9 @@ def calculate(operation, x, y):
 print(calculate("add", 5, 10))
 print(calculate("multiply", 3, 4))
 
- 🏆 Reward: +30 points, “Function Grandmaster” Trophy.
+ 🏆 Reward: +30 points, “Function Grandmaster” Badge.
 
-Game Completion: The Function Master’s Staff
-Upon completing all challenges, players receive the “Function Master’s Staff” and this message:
+Game Completion: The Function Master’s Trophy
+Upon completing all challenges, players receive the “Function Master’s Trophy” and this message:
  "You have uncovered the secrets of functions and scope! With this power, you are ready to conquer even greater coding challenges."
 `;
