@@ -20,3 +20,10 @@ export const LESSONS = [
   'Lesson 3: Loops and Iteration',
   'Lesson 4: Functions and Scope',
 ] as const;
+
+export const LESSON_CHALLENGES = {
+  'Lesson 1: Basics of Syntax and Execution': 8,
+  'Lesson 2: Control Flow with Conditionals': 7,
+  'Lesson 3: Loops and Iteration': 11,
+  'Lesson 4: Functions and Scope': 11,
+} as const;

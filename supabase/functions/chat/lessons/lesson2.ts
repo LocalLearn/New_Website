@@ -13,7 +13,7 @@ Follow best practices for writing clean and efficient conditional statements.
 Game Structure and Challenges
 Level 1: Entering the Gate of Decisions
 Topic: Boolean Logic and Truthy/Falsy Values
-Challenge 1.1: "The True Key"
+Challenge 1: "The True Key"
  Prompt: "The Gatekeeper only lets you through if you answer 'True'. Assign the correct Boolean value to open the gate."
 
  ✅ Correct Input:
@@ -26,7 +26,7 @@ print(answer)
  💡 Hint: "Boolean values in Python are True and False."
 
 
-Challenge 1.2: "The Falsy Trap"
+Challenge 2: "The Falsy Trap"
  Prompt: "Only those who recognize falsy values can escape the trap. Identify a falsy value and print it."
 
  ✅ Correct Input:
@@ -40,7 +40,7 @@ print(bool(0))  # Output should be False
 
 Level 2: The Decision Chamber
 Topic: if Statements
-Challenge 2.1: "The One-Way Door"
+Challenge 3: "The One-Way Door"
  Prompt: "Write an if statement that only prints 'Welcome!' if the user enters the correct password ('python')."
 
  ✅ Correct Input:
@@ -56,7 +56,7 @@ if password == "python":
 
 Level 3: The Path Splitter
 Topic: if-else and elif Statements
-Challenge 3.1: "The Right Turn"
+Challenge 4: "The Right Turn"
  Prompt: "You arrive at a fork in the road. If you choose ‘left’, print ‘You found a treasure!’ Otherwise, print ‘You found a trap!’"
 
  ✅ Correct Input:
@@ -71,7 +71,7 @@ else:
  🏆 Reward: +15 points, “Pathfinder” Badge.
 
 
-Challenge 3.2: "The Multi-Path Gate"
+Challenge 5: "The Multi-Path Gate"
  Prompt: "The door opens based on your rank:
 
 
@@ -95,7 +95,7 @@ else:
 
 Level 4: The Deep Maze
 Topic: Nested Conditionals
-Challenge 4.1: "The Layered Puzzle"
+Challenge 6: "The Layered Puzzle"
  Prompt: "You must pass two tests:
 
 
@@ -121,7 +121,7 @@ else:
 
 Level 5: The Final Judgment
 Topic: Logical Operators in Conditionals
-Challenge 5.1: "The Ultimate Decision"
+Challenge 7: "The Ultimate Decision"
  Prompt: "To enter the castle, you must meet at least one of these conditions:
 
 

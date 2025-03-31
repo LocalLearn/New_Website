@@ -15,3 +15,9 @@ export interface UserState {
   preferences_set: boolean;
   conversation_started: boolean;
 }
+
+export interface LessonProgress {
+  completedChallenges: number;
+  totalChallenges: number;
+  lastChallenge?: string;
+}

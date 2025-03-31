@@ -14,7 +14,7 @@ Use lambda functions for concise operations.
 Game Structure and Challenges
 Level 1: The Function Gate
 Topic: Introduction to Functions
-Challenge 1.1: "The Call of Power"
+Challenge 1: "The Call of Power"
  Prompt: "The gate only opens if you define and call a function named unlock_gate that prints 'Gate Opened!'."
 
  ✅ Correct Input:
@@ -28,7 +28,7 @@ unlock_gate()
  🏆 Reward: +10 points, “Function Summoner” Badge.
 
 
-Challenge 1.2: "The Scroll of Reusability"
+Challenge 2: "The Scroll of Reusability"
  Prompt: "Functions allow us to reuse code! Define a function greet() that prints ‘Hello, Adventurer!’ and call it twice."
 
  ✅ Correct Input:
@@ -46,7 +46,7 @@ greet()
 
 Level 2: The Chamber of Arguments
 Topic: Function Parameters and Arguments
-Challenge 2.1: "The Personalized Portal"
+Challenge 3: "The Personalized Portal"
  Prompt: "Define a function welcome(name) that takes a name as input and prints ‘Welcome, [name]!’"
 
  ✅ Correct Input:
@@ -60,7 +60,7 @@ welcome("Alice")
  🏆 Reward: +15 points, “Name Enchanter” Badge.
 
 
-Challenge 2.2: "The Addition Altar"
+Challenge 4: "The Addition Altar"
  Prompt: "Write a function add(a, b) that takes two numbers and prints their sum."
 
  ✅ Correct Input:
@@ -77,7 +77,7 @@ add(3, 5)
 
 Level 3: The Chamber of Return Values
 Topic: Returning Values from Functions
-Challenge 3.1: "The Magic Number"
+Challenge 5: "The Magic Number"
  Prompt: "Define a function square(num) that returns the square of a number. Then, store the result in a variable and print it."
 
  ✅ Correct Input:
@@ -92,7 +92,7 @@ print(result)
  🏆 Reward: +20 points, “Return Master” Badge.
 
 
-Challenge 3.2: "The Multiplier Scroll"
+Challenge 6: "The Multiplier Scroll"
  Prompt: "Write a function multiply(x, y) that returns the product of two numbers, and print the result."
 
  ✅ Correct Input:
@@ -109,7 +109,7 @@ print(multiply(6, 7))
 
 Level 4: The Dungeon of Scope
 Topic: Function Scope and Lifetime
-Challenge 4.1: "The Vanishing Variable"
+Challenge 7: "The Vanishing Variable"
  Prompt: "Define a function that declares a local variable inside it, then try printing it outside the function. Observe what happens!"
 
  ✅ Correct Input:
@@ -125,7 +125,7 @@ print(message)  # This will cause an error!
  🏆 Reward: +15 points, “Scope Guardian” Badge.
 
 
-Challenge 4.2: "The Global Invocation"
+Challenge 8: "The Global Invocation"
  Prompt: "Modify the function so that the variable message is accessible outside the function using global."
 
  ✅ Correct Input:
@@ -144,7 +144,7 @@ print(message)
 
 Level 5: The Chamber of Shadows
 Topic: Lambda Functions
-Challenge 5.1: "The One-Line Spell"
+Challenge 9: "The One-Line Spell"
  Prompt: "Write a lambda function that takes a number and returns its cube."
 
  ✅ Correct Input:
@@ -156,7 +156,7 @@ print(cube(3))
  🏆 Reward: +15 points, “Lambda Sorcerer” Badge.
 
 
-Challenge 5.2: "The Quick Adder"
+Challenge 10: "The Quick Adder"
  Prompt: "Write a lambda function add that takes two arguments and returns their sum."
 
  ✅ Correct Input:
@@ -171,7 +171,7 @@ print(add(4, 7))
 
 Bonus Level: The Final Challenge – The Function Masterpiece
 Topic: Combining Functions
-Challenge 6.1: "The Ultimate Spell"
+Challenge 11: "The Ultimate Spell"
  Prompt: "Write a function calculate(operation, x, y) that takes an operation ('add' or 'multiply') and two numbers, then returns the result."
 
  ✅ Correct Input:

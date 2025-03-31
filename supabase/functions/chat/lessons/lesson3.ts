@@ -13,7 +13,7 @@ Learn how to control loops with break and continue.
 Game Structure and Challenges
 Level 1: Entering the Looping Labyrinth
 Topic: The Basics of while Loops.
-Challenge 1.1: "The Infinite Door"
+Challenge 1: "The Infinite Door"
 Prompt: “The first door only opens if you can create a simple while loop. Write a loop that prints the numbers 1 to 5.”
 Correct Input:
 python
@@ -26,7 +26,7 @@ while i <= 5:
 
 Reward: +10 points, “Loop Initiator” Badge.
 Hint (if needed): “A while loop repeats while its condition is True. Use i += 1 to increase the value of i each time.”
-Challenge 1.2: "The Countdown Switch"
+Challenge 2: "The Countdown Switch"
 Prompt: “Create a while loop that counts down from 5 to 1 and prints ‘Blast off!’ after the loop finishes.”
 Correct Input:
 python
@@ -42,7 +42,7 @@ Reward: +15 points, “Countdown Conqueror” Badge.
 
 Level 2: The For-Loop Forge
 Topic: Introduction to for Loops and Iterables.
-Challenge 2.1: "The Range Key"
+Challenge 3: "The Range Key"
 Prompt: “Use a for loop and the range() function to print the numbers 0 to 4.”
 Correct Input:
 python
@@ -53,7 +53,7 @@ for i in range(5):
 
 Reward: +10 points, “Range Rover” Badge.
 Feedback: Highlight how range(5) generates numbers from 0 to 4.
-Challenge 2.2: "Summoning the Sum"
+Challenge 4: "Summoning the Sum"
 Prompt: “Use a for loop to calculate the sum of the numbers 1 to 10 and print the result.”
 Correct Input:
 python
@@ -65,7 +65,7 @@ print(total)
 
 
 Reward: +15 points, “Sum Sorcerer” Badge.
-Challenge 2.3: "The Custom Step"
+Challenge 5: "The Custom Step"
 Prompt: “Use range() to create a for loop that prints all even numbers from 2 to 10.”
 Correct Input:
 python
@@ -79,7 +79,7 @@ Hint: “The third argument in range(start, end, step) is the step size.”
 
 Level 3: Controlling the Labyrinth
 Topic: Using break and continue to Control Loops.
-Challenge 3.1: "The Breaking Spell"
+Challenge 6: "The Breaking Spell"
 Prompt: “Write a for loop that prints numbers 1 to 10 but stops if the number is 7.”
 Correct Input:
 python
@@ -91,7 +91,7 @@ for i in range(1, 11):
 
 
 Reward: +10 points, “Breaker of Loops” Badge.
-Challenge 3.2: "The Skipping Trap"
+Challenge 7: "The Skipping Trap"
 Prompt: “Write a for loop that prints numbers from 1 to 10 but skips the number 5.”
 Correct Input:
 python
@@ -106,7 +106,7 @@ Reward: +10 points, “Skip Master” Badge.
 
 Level 4: Nested Loops and Patterns
 Topic: Using Nested Loops to Solve Complex Problems.
-Challenge 4.1: "The Triangle Gate"
+Challenge 8: "The Triangle Gate"
 Prompt: *“Use nested loops to print the following pattern:
 markdown
 CopyEdit
@@ -127,7 +127,7 @@ for i in range(1, 6):
 
 Reward: +20 points, “Pattern Crafter” Badge.
 Hint: “Use end='' in the print() function to stay on the same line.”
-Challenge 4.2: "The Multiplication Maze"
+Challenge 9: "The Multiplication Maze"
 Prompt: “Write a nested loop to print a multiplication table for numbers 1 to 3.”
 Correct Input:
 python
@@ -142,7 +142,7 @@ Reward: +25 points, “Multiplication Master” Badge.
 
 Level 5: Loop Integration Challenge
 Topic: Combining Loops and Logic in a Mini Project.
-Challenge 5.1: "The Sum Finder"
+Challenge 10: "The Sum Finder"
 Prompt: “Write a program that asks the user for a number n and calculates the sum of all numbers from 1 to n.”
 Correct Input:
 python
@@ -155,7 +155,7 @@ print("The sum is", total)
 
 
 Reward: +20 points, “Loop Integrator” Badge.
-Challenge 5.2: "Number Guessing Game"
+Challenge 11: "Number Guessing Game"
 Prompt: “Write a program that generates a secret number (e.g., 7) and lets the user guess it until they’re correct. Provide feedback on each guess.”
 Correct Input:
 python

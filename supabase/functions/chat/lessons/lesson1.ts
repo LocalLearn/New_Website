@@ -98,7 +98,7 @@ print(energy)
 Reward: +15 points, "Energy Master" Badge.
 Hint: Use *= to multiply a variable's value in place.
 
-Final Trial: The Apprentice's Graduation
+Trial 8: The Apprentice's Graduation
 Challenge: Apply all skills to solve a final test.
 Prompt: The Elder Pythonian grants you a final test: Write a script that asks for a user's name, age, and calculates their birth year, then prints it.
 Correct Input:
