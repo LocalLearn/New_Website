@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -74,8 +74,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       setError(null);
+      // Clear any stored auth data first
+      window.localStorage.removeItem('supabase.auth.token');
+      
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      
+      // Force clear the session and user state
+      setSession(null);
+      setUser(null);
+      
+      // Clear any other auth-related storage
+      window.sessionStorage.clear();
+      
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred during sign out');
       throw error;

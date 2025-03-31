@@ -31,6 +31,19 @@ function PythonPilotPage() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isRestarting, setIsRestarting] = useState(false);
 
+  const extractChallengeNumber = (content: string): number | null => {
+    const challengeMatches = content.match(/challenge\s+(\d+)/i);
+    const trialMatches = content.match(/trial\s+(\d+)/i);
+    
+    if (challengeMatches) {
+      return parseInt(challengeMatches[1], 10);
+    }
+    if (trialMatches) {
+      return parseInt(trialMatches[1], 10);
+    }
+    return null;
+  };
+
   const isNearBottom = () => {
     const container = chatContainerRef.current;
     if (!container) return true;
@@ -66,19 +79,6 @@ function PythonPilotPage() {
     setShouldAutoScroll(isNearBottom());
   };
 
-  const extractChallengeNumber = (content: string): number | null => {
-    const challengeMatches = content.match(/challenge\s+(\d+)/i);
-    const trialMatches = content.match(/trial\s+(\d+)/i);
-    
-    if (challengeMatches) {
-      return parseInt(challengeMatches[1], 10);
-    }
-    if (trialMatches) {
-      return parseInt(trialMatches[1], 10);
-    }
-    return null;
-  };
-
   const loadSession = async (lesson: string) => {
     if (!user) return;
 
@@ -91,7 +91,6 @@ function PythonPilotPage() {
         setChatHistory(lessonSession.messages);
         chatState.current.updatePreferences(lessonSession.preferences);
         
-        // Calculate progress from chat history
         let maxChallenge = 0;
         lessonSession.messages.forEach(msg => {
           if (msg.role === 'assistant') {
@@ -142,6 +141,11 @@ function PythonPilotPage() {
       loadSession(selectedLesson);
       setIsInitialized(true);
     }
+
+    // Cleanup storage on unmount
+    return () => {
+      storage.current.destroy();
+    };
   }, [user, isInitialized]);
 
   useEffect(() => {

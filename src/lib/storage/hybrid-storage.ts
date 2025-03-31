@@ -11,14 +11,33 @@ export class HybridStorage implements StorageProvider {
     isPending: false,
     error: null,
   };
+  private syncInterval: number | null = null;
 
   constructor() {
     this.localStore = new IndexedDBStorage();
     this.remoteStore = new SupabaseStorage();
+    this.startAutoSync();
+  }
+
+  private startAutoSync() {
+    // Sync every 30 seconds
+    this.syncInterval = window.setInterval(() => {
+      this.sync();
+    }, 30000);
+
+    // Initial sync
+    this.sync();
+
+    // Sync when online
+    window.addEventListener('online', () => {
+      this.sync();
+    });
   }
 
   async getSessions(): Promise<ChatSession[]> {
     try {
+      // Always try to sync first
+      await this.sync();
       return await this.localStore.getSessions();
     } catch (error) {
       console.error('Failed to get sessions from IndexedDB, falling back to Supabase:', error);
@@ -28,6 +47,8 @@ export class HybridStorage implements StorageProvider {
 
   async getSession(id: string): Promise<ChatSession | null> {
     try {
+      // Always try to sync first
+      await this.sync();
       const sessions = await this.localStore.getSessions();
       return sessions.find(s => s.id === id) || null;
     } catch (error) {
@@ -44,6 +65,7 @@ export class HybridStorage implements StorageProvider {
     };
 
     try {
+      // Save to both stores
       await Promise.all([
         this.localStore.saveSession(sessionToSave),
         this.remoteStore.saveSession(sessionToSave)
@@ -63,6 +85,9 @@ export class HybridStorage implements StorageProvider {
       }
       throw error;
     }
+
+    // Trigger a sync after saving
+    await this.sync();
   }
 
   async deleteSession(id: string): Promise<void> {
@@ -74,6 +99,9 @@ export class HybridStorage implements StorageProvider {
         this.deleteFromStore(this.localStore, id),
         this.deleteFromStore(this.remoteStore, id)
       ]);
+
+      // Trigger a sync after deletion
+      await this.sync();
     } catch (error) {
       console.error('Failed to delete session:', error);
       throw error;
@@ -94,40 +122,51 @@ export class HybridStorage implements StorageProvider {
   }
 
   async sync(): Promise<void> {
-    if (!navigator.onLine) {
-      this.syncStatus.isPending = false;
+    if (!navigator.onLine || this.syncStatus.isPending) {
       return;
     }
+
+    this.syncStatus.isPending = true;
 
     try {
       const localSessions = await this.localStore.getSessions();
       const remoteSessions = await this.remoteStore.getSessions();
 
-      // Create sets of IDs for efficient lookup
+      // Create maps for efficient lookup
+      const localSessionMap = new Map(localSessions.map(s => [s.id, s]));
+      const remoteSessionMap = new Map(remoteSessions.map(s => [s.id, s]));
+
+      // Sync remote to local
+      for (const remoteSession of remoteSessions) {
+        const localSession = localSessionMap.get(remoteSession.id);
+        
+        if (!localSession || new Date(remoteSession.updatedAt) > new Date(localSession.updatedAt)) {
+          await this.localStore.saveSession(remoteSession);
+        }
+      }
+
+      // Sync local to remote
+      for (const localSession of localSessions) {
+        const remoteSession = remoteSessionMap.get(localSession.id);
+        
+        if (!remoteSession || new Date(localSession.updatedAt) > new Date(remoteSession.updatedAt)) {
+          await this.remoteStore.saveSession(localSession);
+        }
+      }
+
+      // Handle deletions
       const localIds = new Set(localSessions.map(s => s.id));
       const remoteIds = new Set(remoteSessions.map(s => s.id));
 
-      // Handle deletions
       for (const id of localIds) {
         if (!remoteIds.has(id)) {
           await this.localStore.deleteSession(id);
         }
       }
+
       for (const id of remoteIds) {
         if (!localIds.has(id)) {
           await this.remoteStore.deleteSession(id);
-        }
-      }
-
-      // Handle updates
-      for (const localSession of localSessions) {
-        if (remoteIds.has(localSession.id)) {
-          const remoteSession = remoteSessions.find(r => r.id === localSession.id)!;
-          if (localSession.updatedAt > remoteSession.updatedAt) {
-            await this.remoteStore.saveSession(localSession);
-          } else if (remoteSession.updatedAt > localSession.updatedAt) {
-            await this.localStore.saveSession(remoteSession);
-          }
         }
       }
 
@@ -143,5 +182,11 @@ export class HybridStorage implements StorageProvider {
 
   getSyncStatus(): SyncStatus {
     return { ...this.syncStatus };
+  }
+
+  destroy() {
+    if (this.syncInterval) {
+      window.clearInterval(this.syncInterval);
+    }
   }
 }
