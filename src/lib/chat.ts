@@ -1,6 +1,7 @@
 import { ChatMessage, UserPreferences, UserState } from './types';
 import { DEFAULT_PREFERENCES, VALID_PREFERENCES } from './constants';
 import { supabase } from './supabase';
+import { chatCache } from './cache';
 
 export class ChatState {
   private state: UserState;
@@ -77,37 +78,56 @@ export async function handleChatMessage(
   selectedLesson: string,
   onChunk: (chunk: string) => void
 ): Promise<ChatMessage[]> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+
+  if (!userId) {
+    throw new Error('User not authenticated');
+  }
+
   if (history.length === 0) {
-    return [
-      {
-        role: 'assistant',
-        content: `Welcome, Adventurer! 🧙‍♂️ Let's tailor your quest. Choose your preferences:
+    const initialMessage: ChatMessage = {
+      role: 'assistant',
+      content: `Welcome, Adventurer! 🧙‍♂️ Let's tailor your quest. Choose your preferences:
 Theme: Fantasy 🏰 / Space 🚀 / Cyberpunk 🤖 / Classic Python 🐍
 Tone: Encouraging 🌟 / Humorous 😄 / Serious 🧠 / Mysterious 🔮
 Difficulty: Novice (guided discovery) / Explorer (balanced) / Master (no hints)
 Learning Style: Visual 🎨 / Hands-on ✋ / Analytical 🔍 / Story-driven 📖
 Type your choices (e.g., 'Fantasy, Humorous, Novice, Visual') or press Enter to use default settings`,
-      },
-    ];
+      timestamp: new Date().toISOString(),
+      userId,
+    };
+
+    await chatCache.saveConversationToCache(selectedLesson, [initialMessage], userId);
+    return [initialMessage];
   }
 
-  const newHistory = [...history, { role: 'user', content: message }];
+  const newMessage: ChatMessage = {
+    role: 'user',
+    content: message,
+    timestamp: new Date().toISOString(),
+    userId,
+  };
+
+  const newHistory = [...history, newMessage];
 
   if (!chatState.arePreferencesSet()) {
     const preferences = parsePreferences(message);
     chatState.updatePreferences(preferences);
-    return [
-      ...newHistory,
-      {
-        role: 'assistant',
-        content: `Great! I'll adjust my responses to match your preferences: ${chatState.getPreferenceString()}. Let's begin ${selectedLesson}!`,
-      },
-    ];
+    
+    const responseMessage: ChatMessage = {
+      role: 'assistant',
+      content: `Great! I'll adjust my responses to match your preferences: ${chatState.getPreferenceString()}. Let's begin ${selectedLesson}!`,
+      timestamp: new Date().toISOString(),
+      userId,
+    };
+
+    const updatedHistory = [...newHistory, responseMessage];
+    await chatCache.saveConversationToCache(selectedLesson, updatedHistory, userId);
+    return updatedHistory;
   }
 
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    
     const response = await fetch(`${supabase.functions.url}/chat`, {
       method: 'POST',
       headers: {
@@ -158,21 +178,26 @@ Type your choices (e.g., 'Fantasy, Humorous, Novice, Visual') or press Enter to 
       throw error;
     }
 
-    return [
-      ...newHistory,
-      {
-        role: 'assistant',
-        content: fullContent,
-      },
-    ];
+    const assistantMessage: ChatMessage = {
+      role: 'assistant',
+      content: fullContent,
+      timestamp: new Date().toISOString(),
+      userId,
+    };
+
+    const finalHistory = [...newHistory, assistantMessage];
+    await chatCache.saveConversationToCache(selectedLesson, finalHistory, userId);
+    return finalHistory;
   } catch (error) {
     console.error('Error calling chat function:', error);
-    return [
-      ...newHistory,
-      {
-        role: 'assistant',
-        content: 'I apologize, but I encountered an error processing your request. Please try again.',
-      },
-    ];
+    const errorMessage: ChatMessage = {
+      role: 'assistant',
+      content: 'I apologize, but I encountered an error processing your request. Please try again.',
+      timestamp: new Date().toISOString(),
+      userId,
+    };
+    const errorHistory = [...newHistory, errorMessage];
+    await chatCache.saveConversationToCache(selectedLesson, errorHistory, userId);
+    return errorHistory;
   }
 }

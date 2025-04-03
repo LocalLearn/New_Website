@@ -8,6 +8,8 @@ export interface UserPreferences {
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
+  timestamp?: string;
+  userId?: string;
 }
 
 export interface UserState {
