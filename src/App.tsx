@@ -7,6 +7,7 @@ import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
 import CoursesPage from './pages/CoursesPage';
 import PythonPilotPage from './pages/PythonPilotPage';
+import ProjectBuilderPage from './pages/ProjectBuilderPage.tsx';
 
 function Navigation() {
   const { user, signOut } = useAuth();
@@ -77,10 +78,11 @@ function App() {
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/python-pilot" element={<PythonPilotPage />} />
+          <Route path="/project-builder" element={<ProjectBuilderPage />} />
         </Routes>
       </div>
     </Router>
   );
 }
 
-export default App;
+export default App

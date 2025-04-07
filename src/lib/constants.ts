@@ -20,3 +20,7 @@ export const LESSONS = [
   'Lesson 3: Loops and Iteration',
   'Lesson 4: Functions and Scope',
 ] as const;
+
+export const PROJECT_TOOLS = [
+  'Project Builder Tool',
+] as const;
