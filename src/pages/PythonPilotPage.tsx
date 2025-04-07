@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, RefreshCw } from 'lucide-react';
+import { Send, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { LESSONS } from '../lib/constants';
 import { ChatMessage } from '../lib/types';
 import { ChatState, handleChatMessage } from '../lib/chat';
@@ -15,10 +15,12 @@ function PythonPilotPage() {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
+  const [isInstructionsOpen, setIsInstructionsOpen] = useState(true);
   const chatState = useRef(new ChatState());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const instructionsRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
   // Handle lesson selection
@@ -160,26 +162,60 @@ function PythonPilotPage() {
     inputRef.current?.focus();
   };
 
+  const toggleInstructions = () => {
+    setIsInstructionsOpen(!isInstructionsOpen);
+  };
+
   return (
     <div className="min-h-[calc(100vh-80px)] bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="space-y-8">
           {/* Instructions and Controls Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">Instructions:</h3>
-                <ol className="list-decimal list-inside space-y-2 text-gray-600 mb-6">
-                  <li>Select a lesson from the dropdown menu below</li>
-                  <li>Type 'Let's Go' to begin the lesson</li>
-                  <li>Set your learning preferences when prompted</li>
-                  <li>Ask questions about the lesson content</li>
-                </ol>
-                <h4 className="font-semibold text-gray-900 mb-2">Tips:</h4>
-                <ul className="list-disc list-inside space-y-2 text-gray-600">
-                  <li>Be specific in your questions</li>
-                  <li>Use follow-up questions to dive deeper</li>
-                </ul>
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                <button
+                  onClick={toggleInstructions}
+                  className="w-full px-6 py-4 flex items-center justify-between text-left bg-purple-50 hover:bg-purple-100 transition-colors"
+                  aria-expanded={isInstructionsOpen}
+                  aria-controls="instructions-content"
+                >
+                  <h3 className="font-semibold text-gray-900">Instructions and Tips</h3>
+                  {isInstructionsOpen ? (
+                    <ChevronUp className="w-5 h-5 text-gray-600" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-600" />
+                  )}
+                </button>
+                <div
+                  id="instructions-content"
+                  ref={instructionsRef}
+                  className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                    isInstructionsOpen ? 'max-h-96' : 'max-h-0'
+                  }`}
+                  aria-hidden={!isInstructionsOpen}
+                >
+                  <div className="p-6">
+                    <div className="mb-6">
+                      <h4 className="font-semibold text-gray-900 mb-2">Getting Started:</h4>
+                      <ol className="list-decimal list-inside space-y-2 text-gray-600">
+                        <li>Select a lesson from the dropdown menu</li>
+                        <li>Type 'Let's Go' to begin the lesson</li>
+                        <li>Set your learning preferences when prompted</li>
+                        <li>Ask questions about the lesson content</li>
+                      </ol>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Tips for Success:</h4>
+                      <ul className="list-disc list-inside space-y-2 text-gray-600">
+                        <li>Be specific in your questions</li>
+                        <li>Use follow-up questions to dive deeper</li>
+                        <li>Practice concepts with your own examples</li>
+                        <li>Take notes on key concepts</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
