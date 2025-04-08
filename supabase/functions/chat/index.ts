@@ -5,6 +5,7 @@ import { lesson2Content } from './lessons/lesson2.ts';
 import { lesson3Content } from './lessons/lesson3.ts';
 import { lesson4Content } from './lessons/lesson4.ts';
 import { systemPrompt } from './SystemPrompt.ts';
+import { projectBuilderContent } from './tools/project-builder.ts';
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -27,11 +28,16 @@ const LESSONS_CONTENT = {
   'Lesson 2: Control Flow with Conditionals': lesson2Content,
   'Lesson 3: Loops and Iteration': lesson3Content,
   'Lesson 4: Functions and Scope': lesson4Content,
+  'Project Builder Tool': projectBuilderContent,
 } as const;
 
 function buildSystemPrompt(selectedLesson: string, preferences: ChatRequest['preferences']): string {
   const lessonContent = LESSONS_CONTENT[selectedLesson as keyof typeof LESSONS_CONTENT] || '';
   
+  if (selectedLesson === 'Project Builder Tool') {
+    return lessonContent;
+  }
+
   return `You are a tutor with the following characteristics:
 - Theme: ${preferences.theme}
 - Tone: ${preferences.tone}
@@ -81,7 +87,6 @@ serve(async (req) => {
       throw new Error(`DeepSeek API error: ${response.statusText}`);
     }
 
-    // Stream the response directly
     return new Response(response.body, {
       headers: {
         ...corsHeaders,

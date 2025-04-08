@@ -9,7 +9,7 @@ export class ChatState {
   constructor() {
     this.state = {
       preferences: { ...DEFAULT_PREFERENCES },
-      preferences_set: false,
+      preferences_set: true, // Changed to true by default
       conversation_started: true,
     };
   }
@@ -49,7 +49,7 @@ export class ChatState {
   reset(): void {
     this.state = {
       preferences: { ...DEFAULT_PREFERENCES },
-      preferences_set: false,
+      preferences_set: true, // Changed to true by default
       conversation_started: true,
     };
   }
@@ -85,15 +85,10 @@ export async function handleChatMessage(
     throw new Error('User not authenticated');
   }
 
-  if (history.length === 0) {
+  if (history.length === 0 && selectedLesson === 'Project Builder Tool') {
     const initialMessage: ChatMessage = {
       role: 'assistant',
-      content: `Welcome, Adventurer! 🧙‍♂️ Let's tailor your quest. Choose your preferences:
-Theme: Fantasy 🏰 / Space 🚀 / Cyberpunk 🤖 / Classic Python 🐍
-Tone: Encouraging 🌟 / Humorous 😄 / Serious 🧠 / Mysterious 🔮
-Difficulty: Novice (guided discovery) / Explorer (balanced) / Master (no hints)
-Learning Style: Visual 🎨 / Hands-on ✋ / Analytical 🔍 / Story-driven 📖
-Type your choices (e.g., 'Fantasy, Humorous, Novice, Visual') or press Enter to use default settings`,
+      content: "What is the coding topic (or framework/technology) for this project, and how many people are in your group?",
       timestamp: new Date().toISOString(),
       userId,
     };
@@ -110,22 +105,6 @@ Type your choices (e.g., 'Fantasy, Humorous, Novice, Visual') or press Enter to 
   };
 
   const newHistory = [...history, newMessage];
-
-  if (!chatState.arePreferencesSet()) {
-    const preferences = parsePreferences(message);
-    chatState.updatePreferences(preferences);
-    
-    const responseMessage: ChatMessage = {
-      role: 'assistant',
-      content: `Great! I'll adjust my responses to match your preferences: ${chatState.getPreferenceString()}. Let's begin ${selectedLesson}!`,
-      timestamp: new Date().toISOString(),
-      userId,
-    };
-
-    const updatedHistory = [...newHistory, responseMessage];
-    await chatCache.saveConversationToCache(selectedLesson, updatedHistory, userId);
-    return updatedHistory;
-  }
 
   try {
     const response = await fetch(`${supabase.functions.url}/chat`, {
