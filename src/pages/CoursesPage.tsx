@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ExternalLink, BookOpen, Users, Puzzle, ArrowRight } from 'lucide-react';
+import { ExternalLink, BookOpen, Users, ArrowRight } from 'lucide-react';
 
 function CourseCard({ 
   title, 
@@ -54,42 +54,37 @@ function CourseCard({
   );
 }
 
-function PathSection({ title, description, children }: {
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}) {
+function SectionBanner({ title, description }: { title: string; description: string }) {
   return (
-    <section className="py-12 first:pt-0 last:pb-0">
-      <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">{title}</h2>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          {description}
-        </p>
+    <div className="bg-purple-50 w-full py-8 px-6">
+      <div className="container mx-auto">
+        <h2 className="text-2xl font-bold text-purple-800 mb-2">{title}</h2>
+        <p className="text-purple-600">{description}</p>
       </div>
-      <div className="max-w-3xl mx-auto space-y-8">
-        {children}
-      </div>
-    </section>
+    </div>
   );
 }
 
 function CoursesPage() {
   return (
     <div className="min-h-[calc(100vh-80px)] bg-gray-50">
-      <div className="container mx-auto px-6 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Courses</h1>
-          <p className="text-lg text-gray-600">
-            Choose your learning path and start your coding journey
-          </p>
+      <div className="py-12">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">Courses</h1>
+            <p className="text-lg text-gray-600">
+              Choose your learning path and start your coding journey
+            </p>
+          </div>
         </div>
 
-        <div className="space-y-16">
-          <PathSection
-            title="Standard Path"
+        {/* Standard Path Section */}
+        <div className="mb-12">
+          <SectionBanner 
+            title="Standard Path" 
             description="Structured learning paths with guided tutorials and interactive lessons"
-          >
+          />
+          <div className="container mx-auto px-6 mt-8">
             <CourseCard
               title="Python Pilot"
               description="Discover the power of Python in just four lessons with this fast-paced pilot course covering essential programming foundations—from syntax and control flow to loops, functions, and variable scope."
@@ -97,21 +92,23 @@ function CoursesPage() {
               startLink="/python-pilot"
               icon={BookOpen}
             />
-          </PathSection>
+          </div>
+        </div>
 
-          <hr className="border-gray-200" />
-
-          <PathSection
-            title="Project Path"
+        {/* Project Path Section */}
+        <div>
+          <SectionBanner 
+            title="Project Path" 
             description="Self-directed learning through hands-on projects and collaborative development"
-          >
+          />
+          <div className="container mx-auto px-6 mt-8">
             <CourseCard
               title="Community Project Builder"
               description="Learn the essentials of project planning and collaboration. Master the art of breaking down complex projects into manageable tasks, explore effective group dynamics, and develop real-world applications with your peers."
               startLink="/project-builder"
               icon={Users}
             />
-          </PathSection>
+          </div>
         </div>
       </div>
     </div>
