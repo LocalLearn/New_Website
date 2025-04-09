@@ -15,10 +15,19 @@ function Navigation() {
 
   const handleSignOut = async () => {
     try {
+      // Only attempt to sign out if there's an active user session
+      if (!user) {
+        console.log('No active session found');
+        navigate('/');
+        return;
+      }
+
       await signOut();
       navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
+      // If there's an error, still redirect to home page
+      navigate('/');
     }
   };
 
@@ -85,4 +94,4 @@ function App() {
   );
 }
 
-export default App
+export default App;
