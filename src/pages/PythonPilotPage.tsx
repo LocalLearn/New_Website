@@ -32,7 +32,7 @@ function PythonPilotPage() {
     chatState.current.reset(); // Reset chat state for new lesson
 
     try {
-      const messages = await chatCache.getConversationFromCache(newLesson);
+      const messages = await chatCache.getConversationFromCache(newLesson, user.id);
       if (messages.length > 0) {
         const sortedMessages = [...messages].sort((a, b) => {
           const aTime = a.timestamp ? new Date(a.timestamp).getTime() : 0;
@@ -40,6 +40,7 @@ function PythonPilotPage() {
           return aTime - bTime;
         });
         setChatHistory(sortedMessages);
+        chatState.current.setPreferencesFromHistory(sortedMessages);
       }
     } catch (error) {
       console.error('Error loading cached messages:', error);
@@ -146,7 +147,7 @@ function PythonPilotPage() {
     try {
       // Only clear the current lesson's conversation
       const store = await chatCache.getStore('readwrite');
-      const request = store.delete(selectedLesson);
+      const request = store.delete([user.id, selectedLesson]);
       
       request.onerror = () => {
         console.error('Error clearing lesson cache:', request.error);

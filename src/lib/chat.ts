@@ -10,7 +10,7 @@ export class ChatState {
     this.state = {
       preferences: { ...DEFAULT_PREFERENCES },
       preferences_set: false,
-      conversation_started: true,
+      conversation_started: false,
     };
   }
 
@@ -22,6 +22,26 @@ export class ChatState {
       }
     });
     this.state.preferences_set = true;
+  }
+
+  setPreferencesFromHistory(messages: ChatMessage[]): void {
+    // Find the first assistant message that contains preferences
+    const preferencesMessage = messages.find(msg => 
+      msg.role === 'assistant' && 
+      msg.content.includes('adjust my responses to match your preferences:')
+    );
+
+    if (preferencesMessage) {
+      const preferences = parsePreferences(preferencesMessage.content);
+      if (Object.keys(preferences).length > 0) {
+        this.updatePreferences(preferences);
+      }
+    }
+
+    // Set conversation started if there are any messages
+    if (messages.length > 0) {
+      this.state.conversation_started = true;
+    }
   }
 
   getPreferenceString(): string {
@@ -50,7 +70,7 @@ export class ChatState {
     this.state = {
       preferences: { ...DEFAULT_PREFERENCES },
       preferences_set: false,
-      conversation_started: true,
+      conversation_started: false,
     };
   }
 }
@@ -85,7 +105,8 @@ export async function handleChatMessage(
     throw new Error('User not authenticated');
   }
 
-  if (history.length === 0) {
+  // Initialize conversation if it hasn't started
+  if (!chatState.isConversationStarted()) {
     const initialMessage: ChatMessage = {
       role: 'assistant',
       content: selectedLesson === 'Project Builder Tool' 
@@ -100,6 +121,7 @@ Type your choices (e.g., 'Fantasy, Humorous, Novice, Visual') or press Enter to 
       userId,
     };
 
+    chatState.startConversation();
     await chatCache.saveConversationToCache(selectedLesson, [initialMessage], userId);
     return [initialMessage];
   }

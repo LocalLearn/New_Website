@@ -31,7 +31,7 @@ class ChatCache {
         const db = (event.target as IDBOpenDBRequest).result;
         
         if (!db.objectStoreNames.contains(this.STORE_NAME)) {
-          const store = db.createObjectStore(this.STORE_NAME, { keyPath: 'conversationId' });
+          const store = db.createObjectStore(this.STORE_NAME, { keyPath: ['userId', 'conversationId'] });
           store.createIndex('userId', 'userId', { unique: false });
           store.createIndex('updatedAt', 'updatedAt', { unique: false });
         }
@@ -61,8 +61,8 @@ class ChatCache {
     
     const conversation: CachedConversation = {
       conversationId,
-      messages: sortedMessages,
       userId,
+      messages: sortedMessages,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -76,13 +76,14 @@ class ChatCache {
 
   async getConversationFromCache(
     conversationId: string,
+    userId: string,
     offset = 0,
     limit = 50
   ): Promise<ChatMessage[]> {
     const store = await this.getStore();
 
     return new Promise((resolve, reject) => {
-      const request = store.get(conversationId);
+      const request = store.get([userId, conversationId]);
       
       request.onerror = () => reject(request.error);
       
@@ -119,7 +120,7 @@ class ChatCache {
     const store = await this.getStore('readwrite');
 
     return new Promise((resolve, reject) => {
-      const getRequest = store.get(conversationId);
+      const getRequest = store.get([userId, conversationId]);
 
       getRequest.onerror = () => reject(getRequest.error);
 

@@ -32,7 +32,7 @@ function ProjectBuilderPage() {
     chatState.current.reset();
 
     try {
-      const messages = await chatCache.getConversationFromCache(newTool);
+      const messages = await chatCache.getConversationFromCache(newTool, user.id);
       if (messages.length > 0) {
         const sortedMessages = [...messages].sort((a, b) => {
           const aTime = a.timestamp ? new Date(a.timestamp).getTime() : 0;
@@ -144,7 +144,7 @@ function ProjectBuilderPage() {
     
     try {
       const store = await chatCache.getStore('readwrite');
-      const request = store.delete(selectedTool);
+      const request = store.delete([user.id, selectedTool]);
       
       request.onerror = () => {
         console.error('Error clearing tool cache:', request.error);
@@ -166,7 +166,7 @@ function ProjectBuilderPage() {
 
   return (
     <div className="min-h-[calc(100vh-80px)] bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4  py-8">
         <div className="space-y-8">
           {/* Instructions and Controls Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

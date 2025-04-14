@@ -13,5 +13,28 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'supabase-js/2.x'
+    }
+  },
+  // Add proper error handling and retries
+  db: {
+    schema: 'public'
+  },
+  // Ensure proper timeout settings
+  realtime: {
+    timeout: 20000
+  }
+});
+
+// Add a listener for auth state changes to help with debugging
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('Supabase auth event:', event);
+  if (session) {
+    console.log('User is authenticated');
+  } else {
+    console.log('No active session');
   }
 });

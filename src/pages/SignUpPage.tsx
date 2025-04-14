@@ -12,7 +12,6 @@ function SignUpPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<SignUpInput>({
     fullName: '',
-    username: '',
     email: '',
     password: ''
   });
@@ -43,7 +42,7 @@ function SignUpPage() {
 
     try {
       setLoading(true);
-      await signUp(formData.email, formData.password, formData.fullName, formData.username);
+      await signUp(formData.email, formData.password, formData.fullName);
       navigate('/');
     } catch (error) {
       console.error('Error signing up:', error);
@@ -94,29 +93,6 @@ function SignUpPage() {
                 />
                 {errors.fullName && (
                   <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Username
-              </label>
-              <div className="mt-1">
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  autoComplete="username"
-                  required
-                  className={`block w-full px-3 py-2 border ${
-                    errors.username ? 'border-red-300' : 'border-gray-300'
-                  } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm`}
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                />
-                {errors.username && (
-                  <p className="mt-1 text-sm text-red-600">{errors.username}</p>
                 )}
               </div>
             </div>
@@ -206,4 +182,4 @@ function SignUpPage() {
   );
 }
 
-export default SignUpPage
+export default SignUpPage;
