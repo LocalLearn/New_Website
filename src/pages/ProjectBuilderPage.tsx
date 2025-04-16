@@ -108,6 +108,7 @@ function ProjectBuilderPage() {
     setIsLoading(true);
 
     try {
+      console.log('Selected Tool:', selectedTool); // Debug log
       const response = await handleChatMessage(
         currentMessage,
         chatHistory,

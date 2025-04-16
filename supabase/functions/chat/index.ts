@@ -32,9 +32,11 @@ const LESSONS_CONTENT = {
 } as const;
 
 function buildSystemPrompt(selectedLesson: string, preferences: ChatRequest['preferences']): string {
+  Deno.log('Building system prompt for lesson:', selectedLesson);
   const lessonContent = LESSONS_CONTENT[selectedLesson as keyof typeof LESSONS_CONTENT] || '';
   
   if (selectedLesson === 'Project Builder Tool') {
+    Deno.log('Using Project Builder content');
     return lessonContent;
   }
 
@@ -62,6 +64,7 @@ serve(async (req) => {
     }
 
     const { messages, selectedLesson, preferences }: ChatRequest = await req.json();
+    Deno.log('Selected Lesson in Supabase Function:', selectedLesson);
 
     const systemMessage = {
       role: 'system',

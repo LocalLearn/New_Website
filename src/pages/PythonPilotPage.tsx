@@ -110,6 +110,7 @@ function PythonPilotPage() {
     setIsLoading(true);
 
     try {
+      console.log('Selected Lesson:', selectedLesson); // Debug log
       const response = await handleChatMessage(
         currentMessage,
         chatHistory,
