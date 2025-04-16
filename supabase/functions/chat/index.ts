@@ -32,15 +32,20 @@ const LESSONS_CONTENT = {
 } as const;
 
 function buildSystemPrompt(selectedLesson: string, preferences: ChatRequest['preferences']): string {
-  Deno.log('Building system prompt for lesson:', selectedLesson);
-  const lessonContent = LESSONS_CONTENT[selectedLesson as keyof typeof LESSONS_CONTENT] || '';
-  
-  if (selectedLesson === 'Project Builder Tool') {
-    Deno.log('Using Project Builder content');
-    return lessonContent;
-  }
+  try {
+    console.log('Building system prompt for lesson:', selectedLesson);
+    const lessonContent = LESSONS_CONTENT[selectedLesson as keyof typeof LESSONS_CONTENT];
+    
+    if (!lessonContent) {
+      throw new Error(`Invalid lesson selected: ${selectedLesson}`);
+    }
+    
+    if (selectedLesson === 'Project Builder Tool') {
+      console.log('Using Project Builder content');
+      return lessonContent;
+    }
 
-  return `You are a tutor with the following characteristics:
+    return `You are a tutor with the following characteristics:
 - Theme: ${preferences.theme}
 - Tone: ${preferences.tone}
 - Teaching Style: ${preferences.learning_style}
@@ -50,9 +55,21 @@ Current Lesson: ${selectedLesson}
 ${lessonContent}
 
 Teaching Instructions: ${systemPrompt}`;
+  } catch (error) {
+    console.log('Error building system prompt:', error);
+    throw new Error(`Failed to build system prompt: ${error.message}`);
+  }
 }
 
 serve(async (req) => {
+  // Add detailed request logging
+  const requestId = crypto.randomUUID();
+  console.log(`[${requestId}] Received request:`, {
+    method: req.method,
+    url: req.url,
+    headers: Object.fromEntries(req.headers.entries())
+  });
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -63,8 +80,24 @@ serve(async (req) => {
       throw new Error('Missing DeepSeek API key');
     }
 
-    const { messages, selectedLesson, preferences }: ChatRequest = await req.json();
-    Deno.log('Selected Lesson in Supabase Function:', selectedLesson);
+    const requestData = await req.json();
+    console.log(`[${requestId}] Request data:`, JSON.stringify(requestData, null, 2));
+
+    const { messages, selectedLesson, preferences }: ChatRequest = requestData;
+
+    if (!messages || !Array.isArray(messages)) {
+      throw new Error('Invalid messages format');
+    }
+
+    if (!selectedLesson) {
+      throw new Error('Selected lesson is required');
+    }
+
+    if (!preferences || typeof preferences !== 'object') {
+      throw new Error('Invalid preferences format');
+    }
+
+    console.log(`[${requestId}] Selected Lesson:`, selectedLesson);
 
     const systemMessage = {
       role: 'system',
@@ -87,7 +120,13 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      throw new Error(`DeepSeek API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.log(`[${requestId}] DeepSeek API error:`, {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
+      throw new Error(`DeepSeek API error: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
     return new Response(response.body, {
@@ -99,9 +138,20 @@ serve(async (req) => {
       },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    console.log(`[${requestId}] Error processing request:`, {
+      error: error.message,
+      stack: error.stack
     });
+
+    return new Response(
+      JSON.stringify({
+        error: error.message,
+        requestId: requestId
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
