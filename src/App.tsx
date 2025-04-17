@@ -1,13 +1,14 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { BookOpen, LogOut } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
 import HomePage from './pages/HomePage';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
+import VerificationPage from './pages/VerificationPage';
 import CoursesPage from './pages/CoursesPage';
 import PythonPilotPage from './pages/PythonPilotPage';
-import ProjectBuilderPage from './pages/ProjectBuilderPage.tsx';
+import ProjectBuilderPage from './pages/ProjectBuilderPage';
 
 function Navigation() {
   const { user, signOut } = useAuth();
@@ -70,19 +71,18 @@ function Navigation() {
 
 function App() {
   return (
-    <Router>
-      <div className="min-h-screen bg-white">
-        <Navigation />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/signin" element={<SignInPage />} />
-          <Route path="/signup" element={<SignUpPage />} />
-          <Route path="/courses" element={<CoursesPage />} />
-          <Route path="/python-pilot" element={<PythonPilotPage />} />
-          <Route path="/project-builder" element={<ProjectBuilderPage />} />
-        </Routes>
-      </div>
-    </Router>
+    <div className="min-h-screen bg-white">
+      <Navigation />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/signin" element={<SignInPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/verify" element={<VerificationPage />} />
+        <Route path="/courses" element={<CoursesPage />} />
+        <Route path="/python-pilot" element={<PythonPilotPage />} />
+        <Route path="/project-builder" element={<ProjectBuilderPage />} />
+      </Routes>
+    </div>
   );
 }
 
