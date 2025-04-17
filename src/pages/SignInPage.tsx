@@ -44,19 +44,22 @@ function SignInPage() {
       setLoading(true);
       await signIn(formData.email, formData.password);
 
-      // Check if user needs onboarding
+      // After successful sign in, check if user needs onboarding
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found after sign in');
+
       const { data: profile } = await supabase
         .from('user_profiles')
         .select('id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('user_id', user.id)
         .single();
 
-      // Redirect based on whether user has a profile
+      // Navigate based on whether user has completed onboarding
+      setLoading(false);
       navigate(profile ? '/courses' : '/onboarding');
     } catch (error) {
-      console.error('Error signing in:', error);
-    } finally {
       setLoading(false);
+      console.error('Error signing in:', error);
     }
   };
 

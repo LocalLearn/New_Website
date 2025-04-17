@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { BookOpen, LogOut } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
+import { UserProfileIcon } from './components/UserProfileIcon';
 import HomePage from './pages/HomePage';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
@@ -13,15 +14,14 @@ import ProjectBuilderPage from './pages/ProjectBuilderPage';
 
 function Navigation() {
   const { user, signOut } = useAuth();
-  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     try {
+      console.log('Initiating sign out...');
       await signOut();
-      navigate('/');
+      console.log('Sign out completed');
     } catch (error) {
-      console.error('Error signing out:', error);
-      navigate('/');
+      console.error('Error during sign out:', error);
     }
   };
 
@@ -42,13 +42,16 @@ function Navigation() {
           </Link>
         )}
         {user ? (
-          <button
-            onClick={handleSignOut}
-            className="flex items-center space-x-2 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>Sign Out</span>
-          </button>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={handleSignOut}
+              className="flex items-center space-x-2 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Sign Out</span>
+            </button>
+            <UserProfileIcon fullName={user.user_metadata?.full_name} />
+          </div>
         ) : (
           <>
             <Link 

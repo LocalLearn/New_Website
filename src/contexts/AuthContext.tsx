@@ -25,33 +25,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session ? 'Logged in' : 'No session');
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, session ? 'Session exists' : 'No session');
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-
-      // Check if user needs to be redirected to onboarding
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('id')
-          .eq('user_id', session.user.id)
-          .single();
-
-        if (!profile) {
-          navigate('/onboarding');
-        }
-      }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
@@ -91,10 +80,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      console.log('Signing out...');
       setError(null);
+      
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      
+      // Clear local state after successful sign out
+      setUser(null);
+      setSession(null);
+      
+      console.log('Sign out successful');
+      navigate('/');
     } catch (error) {
+      console.error('Sign out error:', error);
       setError(error instanceof Error ? error.message : 'An error occurred during sign out');
       throw error;
     }
