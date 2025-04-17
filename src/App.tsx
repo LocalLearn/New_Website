@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
 import VerificationPage from './pages/VerificationPage';
+import OnboardingPage from './pages/OnboardingPage';
 import CoursesPage from './pages/CoursesPage';
 import PythonPilotPage from './pages/PythonPilotPage';
 import ProjectBuilderPage from './pages/ProjectBuilderPage';
@@ -78,6 +79,7 @@ function App() {
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/verify" element={<VerificationPage />} />
+        <Route path="/onboarding" element={<OnboardingPage />} />
         <Route path="/courses" element={<CoursesPage />} />
         <Route path="/python-pilot" element={<PythonPilotPage />} />
         <Route path="/project-builder" element={<ProjectBuilderPage />} />

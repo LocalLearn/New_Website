@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { signInSchema, type SignInInput } from '../lib/validation';
+import { supabase } from '../lib/supabase';
 
 function SignInPage() {
   const navigate = useNavigate();
@@ -42,7 +43,16 @@ function SignInPage() {
     try {
       setLoading(true);
       await signIn(formData.email, formData.password);
-      navigate('/courses');
+
+      // Check if user needs onboarding
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      // Redirect based on whether user has a profile
+      navigate(profile ? '/courses' : '/onboarding');
     } catch (error) {
       console.error('Error signing in:', error);
     } finally {
