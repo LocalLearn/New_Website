@@ -29,9 +29,10 @@ export const useInterestStore = create<InterestState>((set, get) => ({
         .order('name');
       
       if (error) throw error;
-      set({ interests: data });
+      set({ interests: data || [] });
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'Failed to fetch interests' });
+      throw error;
     } finally {
       set({ loading: false });
     }
@@ -51,9 +52,10 @@ export const useInterestStore = create<InterestState>((set, get) => ({
       
       if (error) throw error;
       
-      set({ userInterests: data.map(item => item.interest_id) });
+      set({ userInterests: (data || []).map(item => item.interest_id) });
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'Failed to fetch user interests' });
+      throw error;
     } finally {
       set({ loading: false });
     }
@@ -64,26 +66,35 @@ export const useInterestStore = create<InterestState>((set, get) => ({
       set({ loading: true, error: null });
       
       // First check if interest already exists
-      const { data: existingInterest } = await supabase
+      const { data: existingInterests, error: searchError } = await supabase
         .from('interests')
         .select('*')
-        .ilike('name', name)
-        .single();
+        .ilike('name', name.trim());
 
-      if (existingInterest) {
-        return existingInterest;
+      // Only throw if it's not a "no rows" error
+      if (searchError && searchError.code !== 'PGRST116') {
+        throw searchError;
+      }
+
+      // If we found an existing interest with the same name, return it
+      if (existingInterests && existingInterests.length > 0) {
+        return existingInterests[0];
       }
 
       // Create new interest if it doesn't exist
       const { data, error } = await supabase
         .from('interests')
-        .insert({ name })
+        .insert({ name: name.trim() })
         .select()
         .single();
 
       if (error) throw error;
+      if (!data) throw new Error('No data returned from interest creation');
       
-      set(state => ({ interests: [...state.interests, data] }));
+      // Update local state with the new interest
+      const currentInterests = get().interests;
+      set({ interests: [...currentInterests, data] });
+      
       return data;
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Failed to create interest');
@@ -108,7 +119,8 @@ export const useInterestStore = create<InterestState>((set, get) => ({
 
       if (error) throw error;
       
-      set(state => ({ userInterests: [...state.userInterests, interestId] }));
+      const currentUserInterests = get().userInterests;
+      set({ userInterests: [...currentUserInterests, interestId] });
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Failed to add user interest');
     } finally {
@@ -131,9 +143,10 @@ export const useInterestStore = create<InterestState>((set, get) => ({
 
       if (error) throw error;
       
-      set(state => ({
-        userInterests: state.userInterests.filter(id => id !== interestId)
-      }));
+      const currentUserInterests = get().userInterests;
+      set({
+        userInterests: currentUserInterests.filter(id => id !== interestId)
+      });
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Failed to remove user interest');
     } finally {

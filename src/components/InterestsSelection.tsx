@@ -34,7 +34,7 @@ export function InterestsSelection({ selectedInterests, onInterestsChange }: Int
     const aCount = interests.filter(i => i.id === a.id).length;
     const bCount = interests.filter(i => i.id === b.id).length;
     return bCount - aCount;
-  }).slice(0, 5); // Show top 5 popular interests
+  });
 
   const handleInterestSelect = async (interestId: string) => {
     try {
@@ -57,7 +57,7 @@ export function InterestsSelection({ selectedInterests, onInterestsChange }: Int
     }
   };
 
-  const handleNewInterestSubmit = async (e: React.FormEvent) => {
+  const handleNewInterestSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     
     const trimmedInterest = newInterest.trim();
@@ -73,15 +73,17 @@ export function InterestsSelection({ selectedInterests, onInterestsChange }: Int
       setIsAdding(true);
       setValidationError(null);
       
-      // Create or get existing interest
+      // Create new interest
       const interest = await createInterest(trimmedInterest);
       
       // Add to user's interests if not already selected
       if (!selectedInterests.includes(interest.id)) {
-        await handleInterestSelect(interest.id);
+        await addUserInterest(interest.id);
+        onInterestsChange([...selectedInterests, interest.id]);
       }
       
       setNewInterest('');
+      await fetchInterests(); // Refresh the interests list
     } catch (error) {
       setValidationError(error instanceof Error ? error.message : 'Failed to add interest');
     } finally {
@@ -104,6 +106,7 @@ export function InterestsSelection({ selectedInterests, onInterestsChange }: Int
             >
               {interest.name}
               <button
+                type="button"
                 onClick={() => handleInterestSelect(interest.id)}
                 className="p-0.5 hover:bg-purple-200 rounded-full"
               >
@@ -118,8 +121,8 @@ export function InterestsSelection({ selectedInterests, onInterestsChange }: Int
         {remainingInterests} interest{remainingInterests !== 1 ? 's' : ''} remaining
       </div>
 
-      {/* Add New Interest Form */}
-      <form onSubmit={handleNewInterestSubmit} className="flex gap-2">
+      {/* Add New Interest Input */}
+      <div className="flex gap-2">
         <input
           type="text"
           value={newInterest}
@@ -130,7 +133,8 @@ export function InterestsSelection({ selectedInterests, onInterestsChange }: Int
           disabled={isAdding || selectedInterests.length >= MAX_INTERESTS}
         />
         <button
-          type="submit"
+          type="button"
+          onClick={handleNewInterestSubmit}
           disabled={isAdding || !newInterest.trim() || selectedInterests.length >= MAX_INTERESTS}
           className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -140,7 +144,7 @@ export function InterestsSelection({ selectedInterests, onInterestsChange }: Int
             <Plus className="w-4 h-4" />
           )}
         </button>
-      </form>
+      </div>
 
       {/* Error Messages */}
       {(error || validationError) && (
@@ -156,6 +160,7 @@ export function InterestsSelection({ selectedInterests, onInterestsChange }: Int
           <div className="flex flex-wrap gap-2">
             {popularInterests.map(interest => (
               <button
+                type="button"
                 key={interest.id}
                 onClick={() => handleInterestSelect(interest.id)}
                 disabled={selectedInterests.length >= MAX_INTERESTS && !selectedInterests.includes(interest.id)}
