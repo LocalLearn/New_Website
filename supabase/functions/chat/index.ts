@@ -1,9 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { lesson1Content } from './lessons/lesson1.ts';
-import { lesson2Content } from './lessons/lesson2.ts';
-import { lesson3Content } from './lessons/lesson3.ts';
-import { lesson4Content } from './lessons/lesson4.ts';
 import { systemPrompt } from './SystemPrompt.ts';
 import { projectBuilderContent } from './tools/project-builder.ts';
 
@@ -21,48 +18,20 @@ interface ChatRequest {
     difficulty: string;
     learning_style: string;
   };
+  isIncorrectAttempt?: boolean;
 }
 
-const LESSONS_CONTENT = {
-  'Lesson 1: Basics of Syntax and Execution': lesson1Content,
-  'Lesson 2: Control Flow with Conditionals': lesson2Content,
-  'Lesson 3: Loops and Iteration': lesson3Content,
-  'Lesson 4: Functions and Scope': lesson4Content,
-  'Project Builder Tool': projectBuilderContent,
-} as const;
-
-function buildSystemPrompt(selectedLesson: string, preferences: ChatRequest['preferences']): string {
-  try {
-    console.log('Building system prompt for lesson:', selectedLesson);
-    const lessonContent = LESSONS_CONTENT[selectedLesson as keyof typeof LESSONS_CONTENT];
-    
-    if (!lessonContent) {
-      throw new Error(`Invalid lesson selected: ${selectedLesson}`);
-    }
-    
-    if (selectedLesson === 'Project Builder Tool') {
-      console.log('Using Project Builder content');
-      return lessonContent;
-    }
-
-    return `You are a tutor with the following characteristics:
+function buildSystemPrompt(preferences: ChatRequest['preferences']): string {
+  return `You are a tutor with the following characteristics:
 - Theme: ${preferences.theme}
 - Tone: ${preferences.tone}
 - Teaching Style: ${preferences.learning_style}
 - Difficulty Level: ${preferences.difficulty}
 
-Current Lesson: ${selectedLesson}
-${lessonContent}
-
-Teaching Instructions: ${systemPrompt}`;
-  } catch (error) {
-    console.log('Error building system prompt:', error);
-    throw new Error(`Failed to build system prompt: ${error.message}`);
-  }
+${systemPrompt}`;
 }
 
 serve(async (req) => {
-  // Add detailed request logging
   const requestId = crypto.randomUUID();
   console.log(`[${requestId}] Received request:`, {
     method: req.method,
@@ -83,26 +52,32 @@ serve(async (req) => {
     const requestData = await req.json();
     console.log(`[${requestId}] Request data:`, JSON.stringify(requestData, null, 2));
 
-    const { messages, selectedLesson, preferences }: ChatRequest = requestData;
+    const { messages, preferences, isIncorrectAttempt }: ChatRequest = requestData;
 
     if (!messages || !Array.isArray(messages)) {
       throw new Error('Invalid messages format');
-    }
-
-    if (!selectedLesson) {
-      throw new Error('Selected lesson is required');
     }
 
     if (!preferences || typeof preferences !== 'object') {
       throw new Error('Invalid preferences format');
     }
 
-    console.log(`[${requestId}] Selected Lesson:`, selectedLesson);
-
     const systemMessage = {
       role: 'system',
-      content: buildSystemPrompt(selectedLesson, preferences),
+      content: buildSystemPrompt(preferences),
     };
+
+    // Add context about incorrect attempt if applicable
+    const contextMessages = isIncorrectAttempt
+      ? [
+          systemMessage,
+          {
+            role: 'system',
+            content: 'The user\'s previous attempt was incorrect. Provide themed feedback and guidance.',
+          },
+          ...messages,
+        ]
+      : [systemMessage, ...messages];
 
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
@@ -112,7 +87,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'deepseek-chat',
-        messages: [systemMessage, ...messages],
+        messages: contextMessages,
         temperature: 0.7,
         max_tokens: 1000,
         stream: true,

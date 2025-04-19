@@ -7,6 +7,7 @@ import { FormattedMessage } from '../components/FormattedMessage';
 import { LoadingIndicator } from '../components/LoadingIndicator';
 import { chatCache } from '../lib/cache';
 import { useAuth } from '../contexts/AuthContext';
+import { lesson1Content } from '../lib/lessons/lesson1';
 
 function PythonPilotPage() {
   const { user } = useAuth();
@@ -23,13 +24,12 @@ function PythonPilotPage() {
   const instructionsRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
-  // Handle lesson selection
   const handleLessonChange = async (newLesson: string) => {
     if (!user?.id) return;
 
     setSelectedLesson(newLesson);
-    setChatHistory([]); // Clear current chat display
-    chatState.current.reset(); // Reset chat state for new lesson
+    setChatHistory([]);
+    chatState.current.reset();
 
     try {
       const messages = await chatCache.getConversationFromCache(newLesson, user.id);
@@ -47,7 +47,6 @@ function PythonPilotPage() {
     }
   };
 
-  // Load cached messages when component mounts
   useEffect(() => {
     if (!user?.id) return;
     handleLessonChange(selectedLesson);
@@ -57,7 +56,7 @@ function PythonPilotPage() {
     const container = chatContainerRef.current;
     if (!container) return true;
     
-    const threshold = 100; // pixels from bottom
+    const threshold = 100;
     const position = container.scrollHeight - container.scrollTop - container.clientHeight;
     return position <= threshold;
   };
@@ -110,12 +109,12 @@ function PythonPilotPage() {
     setIsLoading(true);
 
     try {
-      console.log('Selected Lesson:', selectedLesson); // Debug log
       const response = await handleChatMessage(
         currentMessage,
         chatHistory,
         chatState.current,
         selectedLesson,
+        lesson1Content,
         (chunk) => {
           setStreamingContent(prev => prev + chunk);
         }
@@ -146,7 +145,6 @@ function PythonPilotPage() {
     setShouldAutoScroll(true);
     
     try {
-      // Only clear the current lesson's conversation
       const store = await chatCache.getStore('readwrite');
       const request = store.delete([user.id, selectedLesson]);
       

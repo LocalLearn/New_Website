@@ -1,4 +1,4 @@
-import { Challenge } from '../../../lib/types';
+import { Challenge } from '../types';
 
 export const lesson1Content: Challenge[] = [
   {

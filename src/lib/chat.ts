@@ -1,10 +1,11 @@
-import { ChatMessage, UserPreferences, UserState } from './types';
+import { ChatMessage, UserPreferences, UserState, Challenge } from './types';
 import { DEFAULT_PREFERENCES, VALID_PREFERENCES } from './constants';
 import { supabase } from './supabase';
 import { chatCache } from './cache';
 
 export class ChatState {
   private state: UserState;
+  private currentChallengeIndex: number;
 
   constructor() {
     this.state = {
@@ -12,6 +13,7 @@ export class ChatState {
       preferences_set: false,
       conversation_started: false,
     };
+    this.currentChallengeIndex = 0;
   }
 
   updatePreferences(preferences: Partial<UserPreferences>): void {
@@ -25,7 +27,6 @@ export class ChatState {
   }
 
   setPreferencesFromHistory(messages: ChatMessage[]): void {
-    // Find the first assistant message that contains preferences
     const preferencesMessage = messages.find(msg => 
       msg.role === 'assistant' && 
       msg.content.includes('adjust my responses to match your preferences:')
@@ -38,10 +39,17 @@ export class ChatState {
       }
     }
 
-    // Set conversation started if there are any messages
     if (messages.length > 0) {
       this.state.conversation_started = true;
     }
+  }
+
+  getCurrentChallengeIndex(): number {
+    return this.currentChallengeIndex;
+  }
+
+  incrementChallengeIndex(): void {
+    this.currentChallengeIndex++;
   }
 
   getPreferenceString(): string {
@@ -72,6 +80,7 @@ export class ChatState {
       preferences_set: false,
       conversation_started: false,
     };
+    this.currentChallengeIndex = 0;
   }
 }
 
@@ -91,11 +100,25 @@ export function parsePreferences(message: string): Partial<UserPreferences> {
   return parsed;
 }
 
+function gradeChallenge(userInput: string, correctSolution: string): boolean {
+  // Remove whitespace and convert to lowercase for comparison
+  const normalizeCode = (code: string): string => {
+    return code
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '')
+      .replace(/['"`]/g, "'"); // Normalize quotes to single quotes
+  };
+
+  return normalizeCode(userInput) === normalizeCode(correctSolution);
+}
+
 export async function handleChatMessage(
   message: string,
   history: ChatMessage[],
   chatState: ChatState,
   selectedLesson: string,
+  challenges: Challenge[],
   onChunk: (chunk: string) => void
 ): Promise<ChatMessage[]> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -105,7 +128,6 @@ export async function handleChatMessage(
     throw new Error('User not authenticated');
   }
 
-  // Initialize conversation if it hasn't started
   if (!chatState.isConversationStarted()) {
     const initialMessage: ChatMessage = {
       role: 'assistant',
@@ -141,12 +163,33 @@ Type your choices (e.g., 'Fantasy, Humorous, Novice, Visual') or press Enter to 
     
     const responseMessage: ChatMessage = {
       role: 'assistant',
-      content: `Great! I'll adjust my responses to match your preferences: ${chatState.getPreferenceString()}. Let's begin ${selectedLesson}!`,
+      content: `Great! I'll adjust my responses to match your preferences: ${chatState.getPreferenceString()}. Let's begin with your first challenge!\n\n${challenges[0].primerAndChallenge}`,
       timestamp: new Date().toISOString(),
       userId,
     };
 
     const updatedHistory = [...newHistory, responseMessage];
+    await chatCache.saveConversationToCache(selectedLesson, updatedHistory, userId);
+    return updatedHistory;
+  }
+
+  const currentChallenge = challenges[chatState.getCurrentChallengeIndex()];
+  const isCorrect = gradeChallenge(message, currentChallenge.correctSolution);
+
+  if (isCorrect) {
+    const rewardMessage: ChatMessage = {
+      role: 'assistant',
+      content: `Congratulations! ${currentChallenge.reward}\n\n${
+        chatState.getCurrentChallengeIndex() < challenges.length - 1
+          ? challenges[chatState.getCurrentChallengeIndex() + 1].primerAndChallenge
+          : "Congratulations! You've completed all challenges in this lesson!"
+      }`,
+      timestamp: new Date().toISOString(),
+      userId,
+    };
+
+    chatState.incrementChallengeIndex();
+    const updatedHistory = [...newHistory, rewardMessage];
     await chatCache.saveConversationToCache(selectedLesson, updatedHistory, userId);
     return updatedHistory;
   }
@@ -162,6 +205,7 @@ Type your choices (e.g., 'Fantasy, Humorous, Novice, Visual') or press Enter to 
         messages: newHistory,
         selectedLesson,
         preferences: chatState.getPreferences(),
+        isIncorrectAttempt: true,
       }),
     });
 

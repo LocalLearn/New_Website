@@ -1,19 +1,37 @@
-export interface UserPreferences {
-  theme: 'Fantasy' | 'Space' | 'Cyberpunk' | 'Classic Python';
-  tone: 'Encouraging' | 'Humorous' | 'Serious' | 'Mysterious';
-  difficulty: 'Novice' | 'Explorer' | 'Master';
-  learning_style: 'Visual' | 'Hands-on' | 'Analytical' | 'Story-driven';
+import { ChatMessage } from './lib/types';
+
+export type { ChatMessage };
+
+export type LearningPreference = 'visual' | 'auditory' | 'reading' | 'kinesthetic';
+
+export interface Availability {
+  day: string;
+  start_time: string;
+  end_time: string;
 }
 
-export interface ChatMessage {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp?: string;
-  userId?: string;
+export interface Interest {
+  id: string;
+  name: string;
+  created_at: string;
 }
 
-export interface UserState {
-  preferences: UserPreferences;
-  preferences_set: boolean;
-  conversation_started: boolean;
+export interface Course {
+  id: string;
+  title: string;
+  interest_id: string;
+  status: 'pending' | 'active' | 'completed';
+  created_at: string;
+  interest: Interest;
+  enrollments: Array<{
+    user_id: string;
+    created_at: string;
+  }>;
+}
+
+export interface Challenge {
+  id: string;
+  primerAndChallenge: string;
+  correctSolution: string;
+  reward: string;
 }
