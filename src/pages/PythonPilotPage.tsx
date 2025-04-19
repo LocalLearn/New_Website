@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { LESSONS } from '../lib/constants';
 import { ChatMessage } from '../lib/types';
 import { ChatState, handleChatMessage } from '../lib/chat';
 import { FormattedMessage } from '../components/FormattedMessage';
 import { LoadingIndicator } from '../components/LoadingIndicator';
+import { ChatInput } from '../components/ChatInput';
+import { ProgressBar } from '../components/ProgressBar';
 import { chatCache } from '../lib/cache';
 import { useAuth } from '../contexts/AuthContext';
 import { lesson1Content } from '../lib/lessons/lesson1';
@@ -20,10 +22,10 @@ function PythonPilotPage() {
   const chatState = useRef(new ChatState());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const instructionsRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
+  // Handle lesson selection
   const handleLessonChange = async (newLesson: string) => {
     if (!user?.id) return;
 
@@ -105,7 +107,6 @@ function PythonPilotPage() {
     setShouldAutoScroll(true);
     scrollToBottom(true);
     
-    inputRef.current?.focus();
     setIsLoading(true);
 
     try {
@@ -158,8 +159,6 @@ function PythonPilotPage() {
     } catch (error) {
       console.error('Error clearing lesson cache:', error);
     }
-    
-    inputRef.current?.focus();
   };
 
   const toggleInstructions = () => {
@@ -170,7 +169,6 @@ function PythonPilotPage() {
     <div className="min-h-[calc(100vh-80px)] bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="space-y-8">
-          {/* Instructions and Controls Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -246,10 +244,14 @@ function PythonPilotPage() {
                 <RefreshCw className="w-4 h-4" />
                 Reset Lesson
               </button>
+
+              <ProgressBar
+                currentChallenge={chatState.current.getCurrentChallengeIndex() + 1}
+                totalChallenges={lesson1Content.length}
+              />
             </div>
           </div>
 
-          {/* Chat Section */}
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="h-[600px] flex flex-col">
               <div 
@@ -274,26 +276,13 @@ function PythonPilotPage() {
                 <div ref={messagesEndRef} className="h-[1px]" />
               </div>
 
-              <form onSubmit={handleSubmit} className="border-t p-4">
-                <div className="flex gap-2">
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    disabled={isLoading || !user}
-                  />
-                  <button
-                    type="submit"
-                    disabled={isLoading || !user}
-                    className="bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
-                  >
-                    <Send className="w-5 h-5" />
-                  </button>
-                </div>
-              </form>
+              <ChatInput
+                message={message}
+                setMessage={setMessage}
+                onSubmit={handleSubmit}
+                isLoading={isLoading}
+                disabled={!user}
+              />
             </div>
           </div>
         </div>

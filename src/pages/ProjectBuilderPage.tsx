@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { PROJECT_TOOLS } from '../lib/constants';
 import { ChatMessage } from '../lib/types';
 import { ChatState, handleChatMessage } from '../lib/chat';
 import { FormattedMessage } from '../components/FormattedMessage';
 import { LoadingIndicator } from '../components/LoadingIndicator';
+import { ChatInput } from '../components/ChatInput';
 import { chatCache } from '../lib/cache';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -19,11 +20,9 @@ function ProjectBuilderPage() {
   const chatState = useRef(new ChatState());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const instructionsRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
-  // Handle tool selection
   const handleToolChange = async (newTool: string) => {
     if (!user?.id) return;
 
@@ -104,11 +103,10 @@ function ProjectBuilderPage() {
     setShouldAutoScroll(true);
     scrollToBottom(true);
     
-    inputRef.current?.focus();
     setIsLoading(true);
 
     try {
-      console.log('Selected Tool:', selectedTool); // Debug log
+      console.log('Selected Tool:', selectedTool);
       const response = await handleChatMessage(
         currentMessage,
         chatHistory,
@@ -157,8 +155,6 @@ function ProjectBuilderPage() {
     } catch (error) {
       console.error('Error clearing tool cache:', error);
     }
-    
-    inputRef.current?.focus();
   };
 
   const toggleInstructions = () => {
@@ -167,9 +163,8 @@ function ProjectBuilderPage() {
 
   return (
     <div className="min-h-[calc(100vh-80px)] bg-gray-50">
-      <div className="container mx-auto px-4  py-8">
+      <div className="container mx-auto px-4 py-8">
         <div className="space-y-8">
-          {/* Instructions and Controls Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -247,8 +242,7 @@ function ProjectBuilderPage() {
               </button>
             </div>
           </div>
-
-          {/* Chat Section */}
+          
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="h-[600px] flex flex-col">
               <div 
@@ -273,26 +267,13 @@ function ProjectBuilderPage() {
                 <div ref={messagesEndRef} className="h-[1px]" />
               </div>
 
-              <form onSubmit={handleSubmit} className="border-t p-4">
-                <div className="flex gap-2">
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    disabled={isLoading || !user}
-                  />
-                  <button
-                    type="submit"
-                    disabled={isLoading || !user}
-                    className="bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
-                  >
-                    <Send className="w-5 h-5" />
-                  </button>
-                </div>
-              </form>
+              <ChatInput
+                message={message}
+                setMessage={setMessage}
+                onSubmit={handleSubmit}
+                isLoading={isLoading}
+                disabled={!user}
+              />
             </div>
           </div>
         </div>
