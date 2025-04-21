@@ -48,6 +48,10 @@ export class ChatState {
     return this.currentChallengeIndex;
   }
 
+  setCurrentChallengeIndex(index: number): void {
+    this.currentChallengeIndex = index;
+  }
+
   incrementChallengeIndex(): void {
     this.currentChallengeIndex++;
   }
@@ -98,18 +102,6 @@ export function parsePreferences(message: string): Partial<UserPreferences> {
   });
 
   return parsed;
-}
-
-function gradeChallenge(userInput: string, correctSolution: string): boolean {
-  const normalizeCode = (code: string): string => {
-    return code
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, '')
-      .replace(/['"`]/g, "'");
-  };
-
-  return normalizeCode(userInput) === normalizeCode(correctSolution);
 }
 
 export async function handleChatMessage(
@@ -189,11 +181,15 @@ Type your choices (e.g., 'Fantasy, Humorous, Novice, Visual') or press Enter to 
 
     chatState.incrementChallengeIndex();
     const updatedHistory = [...newHistory, rewardMessage];
-    await chatCache.saveConversationToCache(selectedLesson, updatedHistory, userId);
+    await chatCache.saveConversationToCache(
+      selectedLesson,
+      updatedHistory,
+      userId,
+      chatState.getCurrentChallengeIndex()
+    );
     return updatedHistory;
   }
 
-  // Add system message for incorrect answer
   const systemMessage: ChatMessage = {
     role: 'system',
     content: `The student's answer is incorrect. Their attempt was:
@@ -276,7 +272,12 @@ Remember:
     };
 
     const finalHistory = [...newHistory, assistantMessage];
-    await chatCache.saveConversationToCache(selectedLesson, finalHistory, userId);
+    await chatCache.saveConversationToCache(
+      selectedLesson,
+      finalHistory,
+      userId,
+      chatState.getCurrentChallengeIndex()
+    );
     return finalHistory;
   } catch (error) {
     console.error('Error calling chat function:', error);
@@ -287,7 +288,24 @@ Remember:
       userId,
     };
     const errorHistory = [...newHistory, errorMessage];
-    await chatCache.saveConversationToCache(selectedLesson, errorHistory, userId);
+    await chatCache.saveConversationToCache(
+      selectedLesson,
+      errorHistory,
+      userId,
+      chatState.getCurrentChallengeIndex()
+    );
     return errorHistory;
   }
+}
+
+function gradeChallenge(userInput: string, correctSolution: string): boolean {
+  const normalizeCode = (code: string): string => {
+    return code
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '')
+      .replace(/['"`]/g, "'");
+  };
+
+  return normalizeCode(userInput) === normalizeCode(correctSolution);
 }

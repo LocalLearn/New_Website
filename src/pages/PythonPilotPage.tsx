@@ -25,7 +25,6 @@ function PythonPilotPage() {
   const instructionsRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
-  // Handle lesson selection
   const handleLessonChange = async (newLesson: string) => {
     if (!user?.id) return;
 
@@ -34,7 +33,7 @@ function PythonPilotPage() {
     chatState.current.reset();
 
     try {
-      const messages = await chatCache.getConversationFromCache(newLesson, user.id);
+      const { messages, currentChallengeIndex } = await chatCache.getConversationFromCache(newLesson, user.id);
       if (messages.length > 0) {
         const sortedMessages = [...messages].sort((a, b) => {
           const aTime = a.timestamp ? new Date(a.timestamp).getTime() : 0;
@@ -43,6 +42,7 @@ function PythonPilotPage() {
         });
         setChatHistory(sortedMessages);
         chatState.current.setPreferencesFromHistory(sortedMessages);
+        chatState.current.setCurrentChallengeIndex(currentChallengeIndex);
       }
     } catch (error) {
       console.error('Error loading cached messages:', error);
@@ -246,7 +246,7 @@ function PythonPilotPage() {
               </button>
 
               <ProgressBar
-                currentChallenge={chatState.current.getCurrentChallengeIndex() + 1}
+                currentChallenge={chatState.current.getCurrentChallengeIndex()}
                 totalChallenges={lesson1Content.length}
               />
             </div>

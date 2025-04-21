@@ -6,6 +6,7 @@ interface CachedConversation {
   createdAt: string;
   updatedAt: string;
   userId: string;
+  currentChallengeIndex: number;
 }
 
 class ChatCache {
@@ -61,12 +62,12 @@ class ChatCache {
   async saveConversationToCache(
     conversationId: string,
     messages: ChatMessage[],
-    userId: string
+    userId: string,
+    currentChallengeIndex: number = 0
   ): Promise<void> {
     try {
       const store = await this.getStore('readwrite');
       
-      // Sort messages by timestamp before saving
       const sortedMessages = [...messages].sort((a, b) => {
         const aTime = a.timestamp ? new Date(a.timestamp).getTime() : 0;
         const bTime = b.timestamp ? new Date(b.timestamp).getTime() : 0;
@@ -77,6 +78,7 @@ class ChatCache {
         conversationId,
         userId,
         messages: sortedMessages,
+        currentChallengeIndex,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -100,7 +102,7 @@ class ChatCache {
     userId: string,
     offset = 0,
     limit = 50
-  ): Promise<ChatMessage[]> {
+  ): Promise<{ messages: ChatMessage[]; currentChallengeIndex: number }> {
     try {
       const store = await this.getStore();
 
@@ -115,24 +117,25 @@ class ChatCache {
         request.onsuccess = () => {
           const conversation = request.result as CachedConversation | undefined;
           if (!conversation) {
-            resolve([]);
+            resolve({ messages: [], currentChallengeIndex: 0 });
             return;
           }
 
-          // Sort messages by timestamp
           const sortedMessages = [...conversation.messages].sort((a, b) => {
             const aTime = a.timestamp ? new Date(a.timestamp).getTime() : 0;
             const bTime = b.timestamp ? new Date(b.timestamp).getTime() : 0;
             return aTime - bTime;
           });
 
-          // Apply pagination
           const messages = sortedMessages.slice(
             Math.max(0, sortedMessages.length - limit - offset),
             sortedMessages.length - offset
           );
 
-          resolve(messages);
+          resolve({
+            messages,
+            currentChallengeIndex: conversation.currentChallengeIndex || 0
+          });
         };
       });
     } catch (error) {
@@ -144,7 +147,8 @@ class ChatCache {
   async updateCachedConversation(
     conversationId: string,
     newMessage: ChatMessage,
-    userId: string
+    userId: string,
+    currentChallengeIndex: number
   ): Promise<void> {
     try {
       const store = await this.getStore('readwrite');
@@ -161,27 +165,24 @@ class ChatCache {
           const conversation = getRequest.result as CachedConversation | undefined;
           
           if (!conversation) {
-            // If conversation doesn't exist, create it
-            this.saveConversationToCache(conversationId, [newMessage], userId)
+            this.saveConversationToCache(conversationId, [newMessage], userId, currentChallengeIndex)
               .then(resolve)
               .catch(reject);
             return;
           }
 
-          // Update existing conversation
           const updatedMessages = [...conversation.messages, newMessage];
           
-          // Sort messages by timestamp
           const sortedMessages = updatedMessages.sort((a, b) => {
             const aTime = a.timestamp ? new Date(a.timestamp).getTime() : 0;
             const bTime = b.timestamp ? new Date(b.timestamp).getTime() : 0;
             return aTime - bTime;
           });
 
-          // Trim to max 50 messages if needed
           const finalMessages = sortedMessages.slice(-50);
 
           conversation.messages = finalMessages;
+          conversation.currentChallengeIndex = currentChallengeIndex;
           conversation.updatedAt = new Date().toISOString();
 
           const putRequest = store.put(conversation);
