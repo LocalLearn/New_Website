@@ -1,6 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-import { lesson1Content } from './lessons/lesson1.ts';
 import { systemPrompt } from './SystemPrompt.ts';
 import { projectBuilderContent } from './tools/project-builder.ts';
 
@@ -18,7 +17,6 @@ interface ChatRequest {
     difficulty: string;
     learning_style: string;
   };
-  isIncorrectAttempt?: boolean;
 }
 
 function buildSystemPrompt(preferences: ChatRequest['preferences']): string {
@@ -52,7 +50,7 @@ serve(async (req) => {
     const requestData = await req.json();
     console.log(`[${requestId}] Request data:`, JSON.stringify(requestData, null, 2));
 
-    const { messages, preferences, isIncorrectAttempt }: ChatRequest = requestData;
+    const { messages, preferences }: ChatRequest = requestData;
 
     if (!messages || !Array.isArray(messages)) {
       throw new Error('Invalid messages format');
@@ -67,18 +65,6 @@ serve(async (req) => {
       content: buildSystemPrompt(preferences),
     };
 
-    // Add context about incorrect attempt if applicable
-    const contextMessages = isIncorrectAttempt
-      ? [
-          systemMessage,
-          {
-            role: 'system',
-            content: 'The user\'s previous attempt was incorrect. Provide themed feedback and guidance.',
-          },
-          ...messages,
-        ]
-      : [systemMessage, ...messages];
-
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -87,7 +73,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'deepseek-chat',
-        messages: contextMessages,
+        messages: [systemMessage, ...messages],
         temperature: 0.7,
         max_tokens: 1000,
         stream: true,

@@ -101,13 +101,12 @@ export function parsePreferences(message: string): Partial<UserPreferences> {
 }
 
 function gradeChallenge(userInput: string, correctSolution: string): boolean {
-  // Remove whitespace and convert to lowercase for comparison
   const normalizeCode = (code: string): string => {
     return code
       .trim()
       .toLowerCase()
       .replace(/\s+/g, '')
-      .replace(/['"`]/g, "'"); // Normalize quotes to single quotes
+      .replace(/['"`]/g, "'");
   };
 
   return normalizeCode(userInput) === normalizeCode(correctSolution);
@@ -194,6 +193,30 @@ Type your choices (e.g., 'Fantasy, Humorous, Novice, Visual') or press Enter to 
     return updatedHistory;
   }
 
+  // Add system message for incorrect answer
+  const systemMessage: ChatMessage = {
+    role: 'system',
+    content: `The student's answer is incorrect. Their attempt was:
+${message}
+
+The correct solution pattern is:
+${currentChallenge.correctSolution}
+BUT DO NOT SHOW THE CORRECT ANSWER IN YOUR RESPONSE!!
+
+Please provide themed guidance based on their preferences:
+${chatState.getPreferenceString()}
+
+Remember:
+1. DO NOT provide code or pseudocode
+2. Give hints that match their learning style
+3. Ask guiding questions that lead to understanding
+4. Focus on the specific concepts they need to grasp
+5. Be encouraging and maintain the theme
+6. Point out specific issues while staying in character`,
+    timestamp: new Date().toISOString(),
+    userId,
+  };
+
   try {
     const response = await fetch(`${supabase.functions.url}/chat`, {
       method: 'POST',
@@ -202,10 +225,9 @@ Type your choices (e.g., 'Fantasy, Humorous, Novice, Visual') or press Enter to 
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        messages: newHistory,
+        messages: [...history, systemMessage, newMessage],
         selectedLesson,
         preferences: chatState.getPreferences(),
-        isIncorrectAttempt: true,
       }),
     });
 
