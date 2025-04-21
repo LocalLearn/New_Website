@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { LESSONS } from '../lib/constants';
-import { ChatMessage } from '../lib/types';
+import { ChatMessage, Challenge } from '../lib/types';
 import { ChatState, handleChatMessage } from '../lib/chat';
 import { FormattedMessage } from '../components/FormattedMessage';
 import { LoadingIndicator } from '../components/LoadingIndicator';
@@ -10,6 +10,16 @@ import { ProgressBar } from '../components/ProgressBar';
 import { chatCache } from '../lib/cache';
 import { useAuth } from '../contexts/AuthContext';
 import { lesson1Content } from '../lib/lessons/lesson1';
+import { lesson2Content } from '../lib/lessons/lesson2';
+import { lesson3Content } from '../lib/lessons/lesson3';
+import { lesson4Content } from '../lib/lessons/lesson4';
+
+const LESSON_CONTENT_MAP: Record<string, Challenge[]> = {
+  'Lesson 1: Basics of Syntax and Execution': lesson1Content,
+  'Lesson 2: Control Flow with Conditionals': lesson2Content,
+  'Lesson 3: Loops and Iteration': lesson3Content,
+  'Lesson 4: Functions and Scope': lesson4Content,
+};
 
 function PythonPilotPage() {
   const { user } = useAuth();
@@ -24,6 +34,8 @@ function PythonPilotPage() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const instructionsRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+
+  const currentLessonChallenges = LESSON_CONTENT_MAP[selectedLesson] || [];
 
   const handleLessonChange = async (newLesson: string) => {
     if (!user?.id) return;
@@ -115,7 +127,7 @@ function PythonPilotPage() {
         chatHistory,
         chatState.current,
         selectedLesson,
-        lesson1Content,
+        currentLessonChallenges,
         (chunk) => {
           setStreamingContent(prev => prev + chunk);
         }
@@ -247,7 +259,7 @@ function PythonPilotPage() {
 
               <ProgressBar
                 currentChallenge={chatState.current.getCurrentChallengeIndex()}
-                totalChallenges={lesson1Content.length}
+                totalChallenges={currentLessonChallenges.length}
               />
             </div>
           </div>
