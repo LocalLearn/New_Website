@@ -1,26 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { InterestsSelection } from '../components/InterestsSelection';
-import { WelcomeStep } from '../components/WelcomeStep';
 import { LearningPreference } from '../types';
+import { WelcomeStep } from '../components/WelcomeStep';
+import { LearningPreferencesStep } from '../components/LearningPreferencesStep';
+import { LearningDifficultyStep } from '../components/LearningDifficultyStep';
+import { CompletionStep } from '../components/CompletionStep';
+import { OnboardingNavigation } from '../components/OnboardingNavigation';
 
 interface FormData {
-  age: string;
-  gender: string;
-  zipCode: string;
   learningPreferences: LearningPreference[];
-  selectedInterests: string[];
+  difficulty: string;
 }
 
 interface FormErrors {
-  age?: string;
-  gender?: string;
-  zipCode?: string;
   learningPreferences?: string;
-  selectedInterests?: string;
+  difficulty?: string;
   submit?: string;
 }
 
@@ -30,45 +26,24 @@ const OnboardingPage = () => {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData>({
-    age: '',
-    gender: '',
-    zipCode: '',
     learningPreferences: [],
-    selectedInterests: []
+    difficulty: ''
   });
   const [errors, setErrors] = useState<FormErrors>({});
 
   const validateStep = (currentStep: number): boolean => {
     const newErrors: FormErrors = {};
 
-    switch (currentStep) {
-      case 2:
-        if (!formData.age) {
-          newErrors.age = 'Age is required';
-        } else if (parseInt(formData.age) < 13 || parseInt(formData.age) > 120) {
-          newErrors.age = 'Please enter a valid age between 13 and 120';
-        }
-        if (!formData.gender) {
-          newErrors.gender = 'Gender selection is required';
-        }
-        if (!formData.zipCode) {
-          newErrors.zipCode = 'ZIP code is required';
-        } else if (!/^\d{5}(-\d{4})?$/.test(formData.zipCode)) {
-          newErrors.zipCode = 'Please enter a valid ZIP code';
-        }
-        break;
+    if (currentStep === 2) {
+      if (formData.learningPreferences.length === 0) {
+        newErrors.learningPreferences = 'Please select at least one learning preference';
+      }
+    }
 
-      case 3:
-        if (formData.learningPreferences.length === 0) {
-          newErrors.learningPreferences = 'Please select at least one learning preference';
-        }
-        break;
-
-      case 4:
-        if (formData.selectedInterests.length === 0) {
-          newErrors.selectedInterests = 'Please select at least one interest';
-        }
-        break;
+    if (currentStep === 3) {
+      if (!formData.difficulty) {
+        newErrors.difficulty = 'Please select a difficulty level';
+      }
     }
 
     setErrors(newErrors);
@@ -80,18 +55,11 @@ const OnboardingPage = () => {
       case 1:
         return true;
       case 2:
-        return Boolean(
-          formData.age &&
-          parseInt(formData.age) >= 13 &&
-          parseInt(formData.age) <= 120 &&
-          formData.gender &&
-          formData.zipCode &&
-          /^\d{5}(-\d{4})?$/.test(formData.zipCode)
-        );
-      case 3:
         return formData.learningPreferences.length > 0;
+      case 3:
+        return !!formData.difficulty;
       case 4:
-        return formData.selectedInterests.length > 0;
+        return true;
       default:
         return false;
     }
@@ -119,36 +87,11 @@ const OnboardingPage = () => {
         .from('user_profiles')
         .insert({
           user_id: user.id,
-          age: parseInt(formData.age),
-          gender: formData.gender,
-          zip_code: formData.zipCode,
-          learning_preferences: formData.learningPreferences
+          learning_preferences: formData.learningPreferences,
+          difficulty_level: formData.difficulty.toLowerCase()
         });
 
       if (profileError) throw profileError;
-
-      const { data: existingInterests } = await supabase
-        .from('user_interests')
-        .select('interest_id')
-        .eq('user_id', user.id);
-
-      const existingInterestIds = existingInterests?.map(i => i.interest_id) || [];
-      const newInterests = formData.selectedInterests.filter(
-        interestId => !existingInterestIds.includes(interestId)
-      );
-
-      if (newInterests.length > 0) {
-        const interestInserts = newInterests.map(interestId => ({
-          user_id: user.id,
-          interest_id: interestId
-        }));
-
-        const { error: interestsError } = await supabase
-          .from('user_interests')
-          .insert(interestInserts);
-
-        if (interestsError) throw interestsError;
-      }
 
       navigate('/courses');
     } catch (error) {
@@ -160,8 +103,6 @@ const OnboardingPage = () => {
       setIsSubmitting(false);
     }
   };
-
-  const prevStep = () => setStep(step - 1);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -182,123 +123,29 @@ const OnboardingPage = () => {
             )}
 
             {step === 2 && (
-              <>
-                <div>
-                  <label htmlFor="age" className="block text-sm font-medium text-gray-700">
-                    Age
-                  </label>
-                  <input
-                    type="number"
-                    id="age"
-                    value={formData.age}
-                    onChange={(e) => {
-                      setFormData({ ...formData, age: e.target.value });
-                      setErrors({ ...errors, age: undefined });
-                    }}
-                    className={`mt-1 block w-full border ${
-                      errors.age ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500`}
-                  />
-                  {errors.age && (
-                    <p className="mt-1 text-sm text-red-600">{errors.age}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="gender" className="block text-sm font-medium text-gray-700">
-                    Gender
-                  </label>
-                  <select
-                    id="gender"
-                    value={formData.gender}
-                    onChange={(e) => {
-                      setFormData({ ...formData, gender: e.target.value });
-                      setErrors({ ...errors, gender: undefined });
-                    }}
-                    className={`mt-1 block w-full border ${
-                      errors.gender ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500`}
-                  >
-                    <option value="">Select gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                    <option value="prefer_not_to_say">Prefer not to say</option>
-                  </select>
-                  {errors.gender && (
-                    <p className="mt-1 text-sm text-red-600">{errors.gender}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700">
-                    ZIP Code
-                  </label>
-                  <input
-                    type="text"
-                    id="zipCode"
-                    value={formData.zipCode}
-                    onChange={(e) => {
-                      setFormData({ ...formData, zipCode: e.target.value });
-                      setErrors({ ...errors, zipCode: undefined });
-                    }}
-                    className={`mt-1 block w-full border ${
-                      errors.zipCode ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500`}
-                  />
-                  {errors.zipCode && (
-                    <p className="mt-1 text-sm text-red-600">{errors.zipCode}</p>
-                  )}
-                </div>
-              </>
+              <LearningPreferencesStep
+                selectedPreferences={formData.learningPreferences}
+                onChange={(preferences) => {
+                  setFormData({ ...formData, learningPreferences: preferences });
+                  setErrors({ ...errors, learningPreferences: undefined });
+                }}
+                error={errors.learningPreferences}
+              />
             )}
 
             {step === 3 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  How do you prefer to learn?
-                </label>
-                <div className="space-y-2">
-                  {['Visual', 'Reading/Writing', 'Auditory', 'Hands-on'].map((preference) => (
-                    <label key={preference} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={formData.learningPreferences.includes(preference.toLowerCase() as LearningPreference)}
-                        onChange={(e) => {
-                          const preferences = e.target.checked
-                            ? [...formData.learningPreferences, preference.toLowerCase() as LearningPreference]
-                            : formData.learningPreferences.filter(p => p !== preference.toLowerCase());
-                          setFormData({ ...formData, learningPreferences: preferences });
-                          setErrors({ ...errors, learningPreferences: undefined });
-                        }}
-                        className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                      />
-                      <span className="ml-2">{preference}</span>
-                    </label>
-                  ))}
-                </div>
-                {errors.learningPreferences && (
-                  <p className="mt-1 text-sm text-red-600">{errors.learningPreferences}</p>
-                )}
-              </div>
+              <LearningDifficultyStep
+                selectedDifficulty={formData.difficulty}
+                onChange={(difficulty) => {
+                  setFormData({ ...formData, difficulty });
+                  setErrors({ ...errors, difficulty: undefined });
+                }}
+                error={errors.difficulty}
+              />
             )}
 
             {step === 4 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-4">
-                  What are you interested in learning?
-                </label>
-                <InterestsSelection
-                  selectedInterests={formData.selectedInterests}
-                  onInterestsChange={(interests) => {
-                    setFormData({ ...formData, selectedInterests: interests });
-                    setErrors({ ...errors, selectedInterests: undefined });
-                  }}
-                />
-                {errors.selectedInterests && (
-                  <p className="mt-1 text-sm text-red-600">{errors.selectedInterests}</p>
-                )}
-              </div>
+              <CompletionStep onNext={() => handleSubmit} />
             )}
 
             {errors.submit && (
@@ -307,41 +154,21 @@ const OnboardingPage = () => {
               </div>
             )}
 
-            {step > 1 && (
-              <div className="flex justify-between">
-                <button
-                  type="button"
-                  onClick={prevStep}
-                  disabled={isSubmitting}
-                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !isStepValid(step)}
-                  className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${
-                    step === 4 ? 'bg-green-600 hover:bg-green-700' : 'bg-purple-600 hover:bg-purple-700'
-                  } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50`}
-                >
-                  {isSubmitting ? (
-                    <span className="flex items-center">
-                      <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
-                      Saving...
-                    </span>
-                  ) : step === 4 ? (
-                    'Complete'
-                  ) : (
-                    'Next'
-                  )}
-                </button>
-              </div>
+            {step > 1 && step < 4 && (
+              <OnboardingNavigation
+                currentStep={step}
+                totalSteps={4}
+                onPrevious={() => setStep(step - 1)}
+                onNext={() => setStep(step + 1)}
+                isSubmitting={isSubmitting}
+                isValid={isStepValid(step)}
+              />
             )}
           </form>
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default OnboardingPage;
