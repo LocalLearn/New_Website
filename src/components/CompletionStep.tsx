@@ -1,11 +1,18 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface CompletionStepProps {
   onNext: () => void;
 }
 
 export function CompletionStep({ onNext }: CompletionStepProps) {
+  const navigate = useNavigate();
+
+  const handleStart = () => {
+    navigate('/code-demo');
+  };
+
   return (
     <div className="flex flex-col items-center text-center space-y-8">
       {/* Header */}
@@ -36,7 +43,7 @@ export function CompletionStep({ onNext }: CompletionStepProps) {
           After this two-minute intro, you can unlock the rest of the course and save your learning progress.
         </p>
         <button
-          onClick={onNext}
+          onClick={handleStart}
           className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg text-lg font-medium transition-all duration-200 hover:bg-purple-700 hover:scale-105 hover:brightness-110 cursor-pointer"
         >
           Let's Go!

@@ -11,6 +11,7 @@ import OnboardingPage from './pages/OnboardingPage';
 import CoursesPage from './pages/CoursesPage';
 import PythonPilotPage from './pages/PythonPilotPage';
 import ProjectBuilderPage from './pages/ProjectBuilderPage';
+import CodeDemoPage from './pages/CodeDemoPage';
 
 function Navigation() {
   const { user, signOut } = useAuth();
@@ -86,6 +87,7 @@ function App() {
         <Route path="/courses" element={<CoursesPage />} />
         <Route path="/python-pilot" element={<PythonPilotPage />} />
         <Route path="/project-builder" element={<ProjectBuilderPage />} />
+        <Route path="/code-demo" element={<CodeDemoPage />} />
       </Routes>
     </div>
   );
