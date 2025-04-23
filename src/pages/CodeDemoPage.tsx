@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
 import { ChatMessage, Challenge } from '../lib/types';
 import { ChatState, handleChatMessage } from '../lib/chat';
 import { FormattedMessage } from '../components/FormattedMessage';
@@ -21,6 +22,7 @@ function CodeDemoPage() {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
+  const [demoComplete, setDemoComplete] = useState(false);
   const chatState = useRef(new ChatState());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -41,6 +43,11 @@ function CodeDemoPage() {
           setChatHistory(sortedMessages);
           chatState.current.setPreferencesFromHistory(sortedMessages);
           chatState.current.setCurrentChallengeIndex(currentChallengeIndex);
+          
+          // Set demo complete if all challenges are done
+          if (currentChallengeIndex >= DEMO_CHALLENGES.length) {
+            setDemoComplete(true);
+          }
         }
       } catch (error) {
         console.error('Error loading cached messages:', error);
@@ -88,7 +95,7 @@ function CodeDemoPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const currentMessage = message.trim();
-    if (!currentMessage || !user?.id) return;
+    if (!currentMessage || !user?.id || demoComplete) return;
 
     setMessage('');
     const newMessage: ChatMessage = {
@@ -122,10 +129,7 @@ function CodeDemoPage() {
 
       // Check if all demo challenges are completed
       if (chatState.current.getCurrentChallengeIndex() >= DEMO_CHALLENGES.length) {
-        // Navigate to the courses page after a short delay
-        setTimeout(() => {
-          navigate('/courses');
-        }, 3000);
+        setDemoComplete(true);
       }
     } catch (error) {
       console.error('Error handling message:', error);
@@ -181,13 +185,31 @@ function CodeDemoPage() {
                 <div ref={messagesEndRef} className="h-[1px]" />
               </div>
 
-              <ChatInput
-                message={message}
-                setMessage={setMessage}
-                onSubmit={handleSubmit}
-                isLoading={isLoading}
-                disabled={!user}
-              />
+              <div className="border-t">
+                {demoComplete ? (
+                  <div className="p-4 flex justify-center">
+                    <button
+                      onClick={() => navigate('/courses')}
+                      className="group relative overflow-hidden bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-lg font-bold px-8 py-4 rounded-xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 animate-pulse hover:animate-none"
+                    >
+                      <div className="absolute inset-0 bg-white/20 group-hover:animate-sparkle" />
+                      <span className="flex items-center gap-2">
+                        <Sparkles className="w-6 h-6 animate-bounce" />
+                        Claim your reward!
+                        <Sparkles className="w-6 h-6 animate-bounce delay-100" />
+                      </span>
+                    </button>
+                  </div>
+                ) : (
+                  <ChatInput
+                    message={message}
+                    setMessage={setMessage}
+                    onSubmit={handleSubmit}
+                    isLoading={isLoading}
+                    disabled={!user || demoComplete}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>

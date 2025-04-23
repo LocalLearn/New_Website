@@ -33,3 +33,12 @@
 .prose blockquote {
   @apply my-2 border-l-4 border-current pl-4 italic;
 }
+
+@keyframes sparkle {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.5); opacity: 0; }
+}
+
+.animate-sparkle {
+  animation: sparkle 2s infinite;
+}

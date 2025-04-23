@@ -160,7 +160,7 @@ Type your choices (e.g., 'Fantasy, Humorous, Novice, Visual') or press Enter to 
     };
 
     const updatedHistory = [...newHistory, responseMessage];
-    await chatCache.saveConversationToCache(selectedLesson, updatedHistory, userId);
+    await chatCache.saveConversationToCache(selectedLesson, updatedHistory, userId, chatState.getCurrentChallengeIndex());
     return updatedHistory;
   }
 
@@ -168,12 +168,15 @@ Type your choices (e.g., 'Fantasy, Humorous, Novice, Visual') or press Enter to 
   const isCorrect = gradeChallenge(message, currentChallenge.correctSolution);
 
   if (isCorrect) {
+    const isLastDemoChallenge = chatState.getCurrentChallengeIndex() === 2;
     const rewardMessage: ChatMessage = {
       role: 'assistant',
-      content: `Congratulations! ${currentChallenge.reward}\n\n${
-        chatState.getCurrentChallengeIndex() < challenges.length - 1
-          ? challenges[chatState.getCurrentChallengeIndex() + 1].primerAndChallenge
-          : "Congratulations! You've completed all challenges in this lesson!"
+      content: `${currentChallenge.reward}\n\n${
+        isLastDemoChallenge
+          ? "Good work! You finished the demo. Click the button below to claim your reward!"
+          : chatState.getCurrentChallengeIndex() < challenges.length - 1
+            ? challenges[chatState.getCurrentChallengeIndex() + 1].primerAndChallenge
+            : "Congratulations! You've completed all challenges in this lesson!"
       }`,
       timestamp: new Date().toISOString(),
       userId,
