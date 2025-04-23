@@ -25,6 +25,7 @@ unlock_gate()`,
 
 Functions allow us to write code once and use it multiple times:
 \`\`\`
+
 greet()  # First call
 greet()  # Second call
 \`\`\`

@@ -20,12 +20,12 @@ function HomePage() {
               Join our AI-driven collaborative learning platform where technology meets human connection. 
               Experience personalized learning paths and meaningful group interactions.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex justify-center lg:justify-start">
               <button
-                onClick={() => navigate('/signup')}
-                className="bg-purple-600 text-white px-8 py-3 rounded-lg text-center hover:bg-purple-700 transition-colors"
+                onClick={() => navigate('/onboarding')}
+                className="bg-purple-600 text-white text-xl px-12 py-6 rounded-xl shadow-lg hover:bg-purple-700 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 animate-pulse hover:animate-none"
               >
-                Get Started
+                Try a 5 minute demo lesson
               </button>
             </div>
           </div>

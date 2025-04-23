@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { InterestsSelection } from '../components/InterestsSelection';
+import { WelcomeStep } from '../components/WelcomeStep';
 import { LearningPreference } from '../types';
 
 interface FormData {
@@ -41,7 +42,7 @@ const OnboardingPage = () => {
     const newErrors: FormErrors = {};
 
     switch (currentStep) {
-      case 1:
+      case 2:
         if (!formData.age) {
           newErrors.age = 'Age is required';
         } else if (parseInt(formData.age) < 13 || parseInt(formData.age) > 120) {
@@ -57,13 +58,13 @@ const OnboardingPage = () => {
         }
         break;
 
-      case 2:
+      case 3:
         if (formData.learningPreferences.length === 0) {
           newErrors.learningPreferences = 'Please select at least one learning preference';
         }
         break;
 
-      case 3:
+      case 4:
         if (formData.selectedInterests.length === 0) {
           newErrors.selectedInterests = 'Please select at least one interest';
         }
@@ -77,6 +78,8 @@ const OnboardingPage = () => {
   const isStepValid = (currentStep: number): boolean => {
     switch (currentStep) {
       case 1:
+        return true;
+      case 2:
         return Boolean(
           formData.age &&
           parseInt(formData.age) >= 13 &&
@@ -85,9 +88,9 @@ const OnboardingPage = () => {
           formData.zipCode &&
           /^\d{5}(-\d{4})?$/.test(formData.zipCode)
         );
-      case 2:
-        return formData.learningPreferences.length > 0;
       case 3:
+        return formData.learningPreferences.length > 0;
+      case 4:
         return formData.selectedInterests.length > 0;
       default:
         return false;
@@ -103,7 +106,7 @@ const OnboardingPage = () => {
       return;
     }
 
-    if (step < 3) {
+    if (step < 4) {
       setStep(step + 1);
       return;
     }
@@ -112,7 +115,6 @@ const OnboardingPage = () => {
       setIsSubmitting(true);
       setErrors({});
 
-      // Insert into user_profiles
       const { error: profileError } = await supabase
         .from('user_profiles')
         .insert({
@@ -125,19 +127,16 @@ const OnboardingPage = () => {
 
       if (profileError) throw profileError;
 
-      // Get existing user interests
       const { data: existingInterests } = await supabase
         .from('user_interests')
         .select('interest_id')
         .eq('user_id', user.id);
 
-      // Filter out interests that already exist
       const existingInterestIds = existingInterests?.map(i => i.interest_id) || [];
       const newInterests = formData.selectedInterests.filter(
         interestId => !existingInterestIds.includes(interestId)
       );
 
-      // Only insert new interests
       if (newInterests.length > 0) {
         const interestInserts = newInterests.map(interestId => ({
           user_id: user.id,
@@ -151,7 +150,6 @@ const OnboardingPage = () => {
         if (interestsError) throw interestsError;
       }
 
-      // Only navigate after successful data insertion
       navigate('/courses');
     } catch (error) {
       console.error('Error saving onboarding data:', error);
@@ -169,17 +167,21 @@ const OnboardingPage = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Let's get to know you better
+          Just a few things before we get started...
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Step {step} of 3
+          Step {step} of 4
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-2xl">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {step === 1 && (
+              <WelcomeStep onNext={() => setStep(2)} />
+            )}
+
+            {step === 2 && (
               <>
                 <div>
                   <label htmlFor="age" className="block text-sm font-medium text-gray-700">
@@ -251,7 +253,7 @@ const OnboardingPage = () => {
               </>
             )}
 
-            {step === 2 && (
+            {step === 3 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   How do you prefer to learn?
@@ -281,7 +283,7 @@ const OnboardingPage = () => {
               </div>
             )}
 
-            {step === 3 && (
+            {step === 4 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-4">
                   What are you interested in learning?
@@ -305,8 +307,8 @@ const OnboardingPage = () => {
               </div>
             )}
 
-            <div className="flex justify-between">
-              {step > 1 && (
+            {step > 1 && (
+              <div className="flex justify-between">
                 <button
                   type="button"
                   onClick={prevStep}
@@ -315,26 +317,26 @@ const OnboardingPage = () => {
                 >
                   Previous
                 </button>
-              )}
-              <button
-                type="submit"
-                disabled={isSubmitting || !isStepValid(step)}
-                className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${
-                  step === 3 ? 'bg-green-600 hover:bg-green-700' : 'bg-purple-600 hover:bg-purple-700'
-                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50`}
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center">
-                    <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
-                    Saving...
-                  </span>
-                ) : step === 3 ? (
-                  'Complete'
-                ) : (
-                  'Next'
-                )}
-              </button>
-            </div>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !isStepValid(step)}
+                  className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${
+                    step === 4 ? 'bg-green-600 hover:bg-green-700' : 'bg-purple-600 hover:bg-purple-700'
+                  } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50`}
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center">
+                      <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
+                      Saving...
+                    </span>
+                  ) : step === 4 ? (
+                    'Complete'
+                  ) : (
+                    'Next'
+                  )}
+                </button>
+              </div>
+            )}
           </form>
         </div>
       </div>
